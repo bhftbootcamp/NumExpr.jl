@@ -22,6 +22,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/bhftbootcamp/ExprParser.jl",
-    devbranch="master",
+    repo = "github.com/bhftbootcamp/ExprParser.jl",
+    devbranch = "master",
+    push_preview = true,
 )
