@@ -3,11 +3,8 @@ uuid = "005f7402-6e25-4d9a-960d-a0ddd50a2fba"
 authors = [""]
 version = "1.0.0"
 
+[deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+
 [compat]
-julia = "1"
-
-[extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["Test"]
+julia = "1.8"
