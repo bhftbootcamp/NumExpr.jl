@@ -4,7 +4,7 @@ The ExprParser library is designed to parse and evaluate arithmetic expressions.
 
 ## Quickstart
 
-Simple example of basic use.
+Simple example of basic usage.
 
 ```julia
 using ExprParser
