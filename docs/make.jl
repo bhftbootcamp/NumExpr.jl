@@ -15,7 +15,6 @@ makedocs(;
     ),
     pages = [
         "Home" => "index.md",
-        "pages/examples.md",
         "pages/expr_syntax.md",
         "pages/api_reference.md",
     ],
@@ -23,6 +22,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/bhftbootcamp/ExprParser.jl",
-    devbranch="master",
+    repo = "github.com/bhftbootcamp/ExprParser.jl",
+    devbranch = "master",
+    push_preview = true,
 )
