@@ -1,26 +1,26 @@
 using Test
-using ExprParser
+using NumExpr
 
-vectorial(x::ExprParser.NumVal) = [string(x)]
-vectorial(x::ExprParser.Variable) = [string(x)]
+vectorial(x::NumExpr.NumVal) = [string(x)]
+vectorial(x::NumExpr.Variable) = [string(x)]
 
-function vectorial(node::ExprParser.ExprNode)
-    return [string(node.head), map(x -> x isa ExprParser.ExprNode ? vectorial(x) : string(x[]), node.args)...]
+function vectorial(node::NumExpr.ExprNode)
+    return [string(node.head), map(x -> x isa NumExpr.ExprNode ? vectorial(x) : string(x[]), node.args)...]
 end
 
-function variables(node::ExprParser.ExprNode)
-    outs = Set{ExprParser.Variable}()
+function variables(node::NumExpr.ExprNode)
+    outs = Set{NumExpr.Variable}()
     for x in node.args
-        if isa(x, ExprParser.Variable)
+        if isa(x, NumExpr.Variable)
             push!(outs, x)
-        elseif isa(x, ExprParser.ExprNode)
+        elseif isa(x, NumExpr.ExprNode)
             union!(outs, variables(x))
         end
     end
     return outs
 end
 
-@testset verbose = true "ExprParser" begin
+@testset verbose = true "NumExpr" begin
     @testset verbose = true "Parse whitespace" begin
         @test vectorial(parse_expr("1")) == ["1.0"]
         @test vectorial(parse_expr("1 ")) == ["1.0"]
@@ -28,9 +28,9 @@ end
         @test vectorial(parse_expr(" 1 ")) == ["1.0"]
         @test vectorial(parse_expr("  1")) == ["1.0"]
         # test_throws
-        @test_throws ExprParser.SyntaxError parse_expr("")
-        @test_throws ExprParser.SyntaxError parse_expr(" ")
-        @test_throws ExprParser.SyntaxError parse_expr("    ")
+        @test_throws NumExpr.SyntaxError parse_expr("")
+        @test_throws NumExpr.SyntaxError parse_expr(" ")
+        @test_throws NumExpr.SyntaxError parse_expr("    ")
     end
 
     @testset verbose = true "Parse symbols" begin
@@ -41,10 +41,10 @@ end
         @test vectorial(parse_expr("A")) == ["A"]
         @test vectorial(parse_expr("ABCDEFGHIJKLMNOPQRSTUVWXYZ")) == ["ABCDEFGHIJKLMNOPQRSTUVWXYZ"]
         # test_throws non-ascii
-        @test_throws ExprParser.SyntaxError parse_expr("ф")
-        @test_throws ExprParser.SyntaxError parse_expr("α")
-        @test_throws ExprParser.SyntaxError parse_expr("фырк")
-        @test_throws ExprParser.SyntaxError parse_expr("αβγ")
+        @test_throws NumExpr.SyntaxError parse_expr("ф")
+        @test_throws NumExpr.SyntaxError parse_expr("α")
+        @test_throws NumExpr.SyntaxError parse_expr("фырк")
+        @test_throws NumExpr.SyntaxError parse_expr("αβγ")
 
         # tests for scientific notation
         @test vectorial(parse_expr("1e10")) == ["1.0e10"]
@@ -54,8 +54,8 @@ end
         @test vectorial(parse_expr("7.89e0")) == ["7.89"]
 
         # test for e edge cases
-        @test_throws ExprParser.SyntaxError parse_expr("1e")
-        @test_throws ExprParser.SyntaxError parse_expr("2.5E+")
+        @test_throws NumExpr.SyntaxError parse_expr("1e")
+        @test_throws NumExpr.SyntaxError parse_expr("2.5E+")
     end
 
     @testset verbose = true "Parse numbers" begin
@@ -72,17 +72,17 @@ end
         @test vectorial(parse_expr("(( 1) ) ")) == ["1.0"]
         @test vectorial(parse_expr("( (1 )) ")) == ["1.0"]
         # test_throws
-        @test_throws ExprParser.SyntaxError parse_expr("(")
-        @test_throws ExprParser.SyntaxError parse_expr(")")
-        @test_throws ExprParser.SyntaxError parse_expr("(1")
-        @test_throws ExprParser.SyntaxError parse_expr("1)")
-        @test_throws ExprParser.SyntaxError parse_expr("(()")
-        @test_throws ExprParser.SyntaxError parse_expr("((1)")
-        @test_throws ExprParser.SyntaxError parse_expr("(1))")
-        @test_throws ExprParser.SyntaxError parse_expr(")1")
-        @test_throws ExprParser.SyntaxError parse_expr("1(")
-        @test_throws ExprParser.SyntaxError parse_expr(")(1)")
-        @test_throws ExprParser.SyntaxError parse_expr("(1)(")
+        @test_throws NumExpr.SyntaxError parse_expr("(")
+        @test_throws NumExpr.SyntaxError parse_expr(")")
+        @test_throws NumExpr.SyntaxError parse_expr("(1")
+        @test_throws NumExpr.SyntaxError parse_expr("1)")
+        @test_throws NumExpr.SyntaxError parse_expr("(()")
+        @test_throws NumExpr.SyntaxError parse_expr("((1)")
+        @test_throws NumExpr.SyntaxError parse_expr("(1))")
+        @test_throws NumExpr.SyntaxError parse_expr(")1")
+        @test_throws NumExpr.SyntaxError parse_expr("1(")
+        @test_throws NumExpr.SyntaxError parse_expr(")(1)")
+        @test_throws NumExpr.SyntaxError parse_expr("(1)(")
     end
 
     @testset verbose = true "Parse dot" begin
@@ -98,12 +98,12 @@ end
         @test vectorial(parse_expr("123.")) == ["123.0"]
         @test vectorial(parse_expr("abc.")) == ["abc."]
         # test_throws
-        @test_throws ExprParser.SyntaxError parse_expr(".123")
-        @test_throws ExprParser.SyntaxError parse_expr("123..3")
-        @test_throws ExprParser.SyntaxError parse_expr(".123.")
-        @test_throws ExprParser.SyntaxError parse_expr(".(")
-        @test_throws ExprParser.SyntaxError parse_expr(").")
-        @test_throws ExprParser.SyntaxError parse_expr(".abc")
+        @test_throws NumExpr.SyntaxError parse_expr(".123")
+        @test_throws NumExpr.SyntaxError parse_expr("123..3")
+        @test_throws NumExpr.SyntaxError parse_expr(".123.")
+        @test_throws NumExpr.SyntaxError parse_expr(".(")
+        @test_throws NumExpr.SyntaxError parse_expr(").")
+        @test_throws NumExpr.SyntaxError parse_expr(".abc")
     end
 
     @testset verbose = true "Parse functions" begin
@@ -244,15 +244,15 @@ end
     end
 
     @testset verbose = true "Eval expr with vars" begin
-        @test_throws ExprParser.SyntaxError eval_expr(parse_expr("4 - π"))
-        @test_throws ExprParser.SyntaxError eval_expr(parse_expr("3 + 2ℯ1 - π"))
-        @test_throws ExprParser.SyntaxError eval_expr(parse_expr("(3 + 2ℯ1 - π) * Inf"))
+        @test_throws NumExpr.SyntaxError eval_expr(parse_expr("4 - π"))
+        @test_throws NumExpr.SyntaxError eval_expr(parse_expr("3 + 2ℯ1 - π"))
+        @test_throws NumExpr.SyntaxError eval_expr(parse_expr("(3 + 2ℯ1 - π) * Inf"))
         @test_throws MethodError eval_expr(parse_expr("1/-Inf"))
     end
 
     @testset verbose = true "Eval expr with strings" begin
-        @test_throws ExprParser.SyntaxError eval_expr(parse_expr("'aaaaa"))
-        @test_throws ExprParser.SyntaxError eval_expr(parse_expr("'bbb''''"))
+        @test_throws NumExpr.SyntaxError eval_expr(parse_expr("'aaaaa"))
+        @test_throws NumExpr.SyntaxError eval_expr(parse_expr("'bbb''''"))
 
         expr = "'a' * 'b' * 'v'"
         @test eval_expr(parse_expr(expr)) == Meta.eval(Meta.parse(expr))
@@ -517,42 +517,42 @@ end
     end
 
     @testset "Parsing: Invalid Syntax Error" begin
-        @test_throws ExprParser.SyntaxError begin
+        @test_throws NumExpr.SyntaxError begin
             var_str = "sum.(1, 2, 3)"
             parse_expr(var_str)
         end
 
-        @test_throws ExprParser.SyntaxError begin
+        @test_throws NumExpr.SyntaxError begin
             var_str = "my_global_var[type='total',name='screwdriver]"
             parse_expr(var_str)
         end
 
-        @test_throws ExprParser.SyntaxError begin
+        @test_throws NumExpr.SyntaxError begin
             var_str = "my_global_var[type='total' '3', name='screwdriver']"
             parse_expr(var_str)
         end
 
-        @test_throws ExprParser.SyntaxError begin
+        @test_throws NumExpr.SyntaxError begin
             var_str = "my_global_var[type='total' count='3', name='screwdriver']"
             parse_expr(var_str)
         end
 
-        @test_throws ExprParser.SyntaxError begin
+        @test_throws NumExpr.SyntaxError begin
             var_str = "my_global_var[type='total', 'count'='3', name='screwdriver']"
             parse_expr(var_str)
         end
 
-        @test_throws ExprParser.SyntaxError begin
+        @test_throws NumExpr.SyntaxError begin
             var_str = "my_global_var[type='total, '', name='screwdriver']"
             parse_expr(var_str)
         end
 
-        @test_throws ExprParser.SyntaxError begin
+        @test_throws NumExpr.SyntaxError begin
             var_str = "my_global_var[type='total '', name='screwdriver']"
             parse_expr(var_str)
         end
 
-        @test_throws ExprParser.SyntaxError begin
+        @test_throws NumExpr.SyntaxError begin
             var_str = "my_global_var[ty.pe='total', name='screwdriver']"
             parse_expr(var_str)
         end

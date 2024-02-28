@@ -198,7 +198,7 @@ const global_vars = Dict{String,Float64}(
 
 As well as a function that will extract the values of variables in the process of calculating expressions
 ```julia
-function ExprParser.eval_expr(var::ExprParser.Variable)
+function NumExpr.eval_expr(var::NumExpr.Variable)
     return get(isglobal_scope(var) ? global_vars : local_vars, var[], NaN)
 end
 ```
@@ -299,7 +299,7 @@ colors = Dict{String, UInt32}(
 - Then, it is necessary to overload the function that will extract variable values from their source.
 For example, let's request the value for the variable name `var` from the `colors` dictionary:
 ```julia
-ExprParser.eval_expr(var::ExprParser.Variable) = get(colors, var[], NaN)
+NumExpr.eval_expr(var::NumExpr.Variable) = get(colors, var[], NaN)
 ```
 
 Now, during the evaluation of the expression, variables will be interpreted as numbers.
@@ -318,13 +318,13 @@ julia> eval_expr(expr)
 ## [Custom Functions](@id custom_func)
 
 In addition to predefined functions, users can define their own.
-To define a new operation on the elements mentioned earlier, you need to define a new method for the `ExprParser.call` function.
-- The first argument of such a method should be of type `::ExprParser.Func{:S}`, where `S` is the name of the new function.
+To define a new operation on the elements mentioned earlier, you need to define a new method for the `NumExpr.call` function.
+- The first argument of such a method should be of type `::NumExpr.Func{:S}`, where `S` is the name of the new function.
 - Subsequent arguments should correspond to the required arguments of the defined function.
 
 For example, for a function `max(x::Number, y::Number)`, you need to define the following method:
 ```julia
-function ExprParser.call(::ExprParser.Func{:max}, x::Number, y::Number)
+function NumExpr.call(::NumExpr.Func{:max}, x::Number, y::Number)
     return max(x, y)
 end
 ```
@@ -339,7 +339,7 @@ julia> eval_expr(expr)
 
 For functions with an unknown number of arguments the method can look like this:
 ```julia
-function ExprParser.call(::ExprParser.Func{:sum}, x::Number...)
+function NumExpr.call(::NumExpr.Func{:sum}, x::Number...)
     return sum(x)
 end
 ```

@@ -1,15 +1,15 @@
-using ExprParser
+using NumExpr
 using Documenter
 
-DocMeta.setdocmeta!(ExprParser, :DocTestSetup, :(using ExprParser); recursive=true)
+DocMeta.setdocmeta!(NumExpr, :DocTestSetup, :(using NumExpr); recursive=true)
 
 makedocs(;
-    modules = [ExprParser],
+    modules = [NumExpr],
     authors = "",
-    sitename = "ExprParser.jl",
+    sitename = "NumExpr.jl",
     format = Documenter.HTML(;
-        repolink = "https://github.com/bhftbootcamp/ExprParser.jl.git",
-        canonical = "https://bhftbootcamp.github.io/ExprParser.jl",
+        repolink = "https://github.com/bhftbootcamp/NumExpr.jl.git",
+        canonical = "https://bhftbootcamp.github.io/NumExpr.jl",
         edit_link = "master",
         assets = String[],
     ),
@@ -22,7 +22,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo = "github.com/bhftbootcamp/ExprParser.jl",
+    repo = "github.com/bhftbootcamp/NumExpr.jl",
     devbranch = "master",
     push_preview = true,
 )

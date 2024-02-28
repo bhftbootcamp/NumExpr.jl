@@ -66,7 +66,7 @@ julia> colors = Dict{String,UInt32}(
            "color[name='blue']"  => 0x0000ff,
        );
 
-julia> ExprParser.eval_expr(var::ExprParser.Variable) = get(colors, var[], NaN)
+julia> NumExpr.eval_expr(var::NumExpr.Variable) = get(colors, var[], NaN)
 
 julia> expr = parse_expr("color[name='red'] + color[name='blue']");
 

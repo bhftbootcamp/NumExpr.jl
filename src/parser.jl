@@ -60,13 +60,13 @@ julia> const vars = Dict{String,Float64}(
            "var{tag='value'}" => 2,
        );
 
-julia> ExprParser.eval_expr(var::ExprParser.Variable) = get(vars, var[], NaN)
+julia> NumExpr.eval_expr(var::NumExpr.Variable) = get(vars, var[], NaN)
 
 julia> var = parse_expr("var{tag='value'}")
 var{tag='value'}
 
 julia> typeof(var)
-ExprParser.Variable{ExprParser.LocalScope}
+NumExpr.Variable{NumExpr.LocalScope}
 
 julia> var_name(var)
 "var"
@@ -434,12 +434,12 @@ julia> colors = Dict{String,UInt32}(
            "color[name='blue']"  => 0x0000ff,
        );
 
-julia> ExprParser.eval_expr(var::ExprParser.Variable) = get(colors, var[], NaN)
+julia> NumExpr.eval_expr(var::NumExpr.Variable) = get(colors, var[], NaN)
 
 julia> expr = parse_expr("color[name='red'] + color[name='blue']")
-ExprParser.ExprNode(
+NumExpr.ExprNode(
     +,
-    Union{ExprParser.AbstractExpr, ExprParser.ExprNode}[
+    Union{NumExpr.AbstractExpr, NumExpr.ExprNode}[
         color[name='red'],
         color[name='blue'],
     ],

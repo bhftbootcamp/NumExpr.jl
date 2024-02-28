@@ -72,6 +72,6 @@ jobs:
         shell: julia --project=docs --color=yes {0}
         run: |
           using Documenter: DocMeta, doctest
-          using ExprParser
-          DocMeta.setdocmeta!(ExprParser, :DocTestSetup, :(using ExprParser); recursive=true)
-          doctest(ExprParser)
+          using NumExpr
+          DocMeta.setdocmeta!(NumExpr, :DocTestSetup, :(using NumExpr); recursive=true)
+          doctest(NumExpr)

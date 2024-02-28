@@ -1,14 +1,14 @@
-# ExprParser.jl
+# NumExpr.jl
 
-The ExprParser library is designed to parse and evaluate arithmetic expressions. It allows for the analysis of these expressions and can perform calculations using user-defined functions.
+The NumExpr library is designed to parse and evaluate arithmetic expressions. It allows for the analysis of these expressions and can perform calculations using user-defined functions.
 
 ## Quickstart
 
 Simple example of basic usage.
 
 ```julia
-using ExprParser
-using ExprParser: Func, Variable
+using NumExpr
+using NumExpr: Func, Variable
 
 colors = Dict{String,UInt32}(
     "color"                 => 0xffffff,
@@ -20,9 +20,9 @@ colors = Dict{String,UInt32}(
     "color[name='magenta']" => 0xff00ff,
 )
 
-ExprParser.eval_expr(var::Variable) = get(colors, var[], NaN)
+NumExpr.eval_expr(var::Variable) = get(colors, var[], NaN)
 
-function ExprParser.call(::Func{:mix_colors}, c1::UInt32, c2::UInt32)
+function NumExpr.call(::Func{:mix_colors}, c1::UInt32, c2::UInt32)
     r = ((c1 >> 16) & 0xFF + (c2 >> 16) & 0xFF) >> 1
     g = ((c1 >> 8)  & 0xFF + (c2 >> 8)  & 0xFF) >> 1
     b = (c1         & 0xFF +  c2        & 0xFF) >> 1

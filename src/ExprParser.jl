@@ -1,4 +1,4 @@
-module ExprParser
+module NumExpr
 
 export parse_expr,
     eval_expr,

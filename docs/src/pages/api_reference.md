@@ -1,9 +1,9 @@
 # [API reference](@id api)
 
 ```@docs
-ExprParser.ExprNode
-ExprParser.Variable
-ExprParser.parse_expr
-ExprParser.eval_expr(::ExprParser.ExprNode)
-ExprParser.eval_expr(::ExprParser.Variable)
+NumExpr.ExprNode
+NumExpr.Variable
+NumExpr.parse_expr
+NumExpr.eval_expr(::NumExpr.ExprNode)
+NumExpr.eval_expr(::NumExpr.Variable)
 ```
