@@ -1,0 +1,13 @@
+name: Tests & Coverage
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+jobs:
+  test:
+    uses: bhftbootcamp/.githubactions/.github/workflows/Coverage.yml@master

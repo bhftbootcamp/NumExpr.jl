@@ -1,0 +1,8 @@
+name: Documenter
+on:
+  push:
+    tags: [v*]
+  pull_request:
+jobs:
+  docs:
+    uses: bhftbootcamp/.githubactions/.github/workflows/Documentation.yml@master

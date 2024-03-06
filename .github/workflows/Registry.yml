@@ -1,0 +1,14 @@
+name: Update public registry
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+jobs:
+  registry:
+    uses: bhftbootcamp/.githubactions/.github/workflows/Registry.yml@master
+    with:
+      registers: bhftbootcamp/Orange
+      target_registry: bhftbootcamp/Orange
+    secrets:
+      token: ${{ secrets.REGISTRATOR_TOKEN }}
