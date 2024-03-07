@@ -1,4 +1,7 @@
-name: Update public registry
+name: Update registry
+env:
+  target_repository: "https://${{ secrets.REGISTRATOR_TOKEN }}@github.com/${{ github.repository }}.git"
+  public_registry: "https://${{ secrets.REGISTRATOR_TOKEN }}@github.com/bhftbootcamp/Orange.git"
 on:
   push:
     branches:
@@ -6,9 +9,50 @@ on:
   workflow_dispatch:
 jobs:
   registry:
-    uses: bhftbootcamp/.githubactions/.github/workflows/Registry.yml@master
-    with:
-      registers: bhftbootcamp/Orange
-      target_registry: bhftbootcamp/Orange
-    secrets:
-      token: ${{ secrets.REGISTRATOR_TOKEN }}
+    name: Update registry
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure Git
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq git
+          git config --global user.name github-actions[bot]
+          git config --global user.email github-actions[bot]@users.noreply.github.com
+      - name: Add registry to environment
+        run: |
+          julia -e '
+            using Pkg;
+            Pkg.update()
+            Pkg.Registry.add(Pkg.RegistrySpec(; url = "${{ env.public_registry }}"))
+            Pkg.Registry.update()
+            '
+      - name: Updating package version in registers
+        run: |
+          julia -e '
+            using Pkg
+            Pkg.update()
+            Pkg.develop(url = "${{ env.target_repository }}")
+            Pkg.add("LocalRegistry")
+            using LocalRegistry
+            using TOML
+    
+            name = first(split(basename("${{ env.target_repository }}"), "."))
+    
+            LocalRegistry.register(
+              name,
+              registry = "${{ env.public_registry }}",
+              commit = true, push = true,
+              ignore_reregistration = true,
+            )
+  
+            path = joinpath(DEPOT_PATH[1], "dev", name)
+            toml = TOML.parsefile(joinpath(path, "Project.toml"))
+            version = VersionNumber(toml["version"])
+  
+            cd(path)
+            run(`git tag -f "v$version"`)
+            run(`git push --force origin "v$version"`)
+            '
+        shell: bash
+        env:
+          REGISTRY_URL: 
+          REPOSITORY_URL: 

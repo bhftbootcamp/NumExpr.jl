@@ -1,4 +1,6 @@
 name: CompatHelper
+env:
+  public_registry: "https://github.com/bhftbootcamp/Orange.git"
 on:
   schedule:
     - cron: 0 0 * * *
@@ -6,11 +8,28 @@ on:
 jobs:
   CompatHelper:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
     steps:
-      - name: Pkg.add("CompatHelper")
-        run: julia -e 'using Pkg; Pkg.add("CompatHelper")'
-      - name: CompatHelper.main()
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v1
+      - uses: julia-actions/cache@v1
+      - name: Add registry to environment
+        run: |
+          julia -e '
+            using Pkg;
+            Pkg.update()
+            Pkg.Registry.add(Pkg.RegistrySpec(; url = "${{ env.public_registry }}"))
+            Pkg.Registry.update()
+            '
+      - name: Configure CompatHelper
+        run: |
+          julia -e '
+          using Pkg
+          Pkg.add("CompatHelper")
+          using CompatHelper
+          CompatHelper.main(use_existing_registries = true)
+          '
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMPATHELPER_PRIV: ${{ secrets.DOCUMENTER_KEY }}
-        run: julia -e 'using CompatHelper; CompatHelper.main()'
+          GITHUB_TOKEN: ${{ github.token }} # Token required to create a pull request to the same repository
