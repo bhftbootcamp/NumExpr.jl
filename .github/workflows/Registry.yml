@@ -41,7 +41,6 @@ jobs:
           julia -e '
             using Pkg
             
-            Pkg.update()
             Pkg.add("LocalRegistry")
             Pkg.develop(url = "${{ env.target_repository }}")
 
