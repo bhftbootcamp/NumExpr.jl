@@ -1,7 +1,7 @@
 name: Documenter
 
 env:
-  public_registry: "https://github.com/bhftbootcamp/Orange.git"
+  registry_path: bhftbootcamp/Orange
 
 on:
   push:
@@ -25,7 +25,7 @@ jobs:
           julia -e '
             using Pkg
             Pkg.update()
-            Pkg.Registry.add(Pkg.RegistrySpec(; url = "${{ env.public_registry }}"))
+            Pkg.Registry.add(Pkg.RegistrySpec(; url = "https://github.com/${{ env.registry_path }}.git"))
             Pkg.Registry.update()
             '
       - name: Install dependencies
@@ -34,4 +34,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: julia --project=docs/ docs/make.jl
-        
