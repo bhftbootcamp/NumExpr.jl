@@ -1,10 +1,13 @@
 name: Documenter
+
 env:
   public_registry: "https://github.com/bhftbootcamp/Orange.git"
+
 on:
   push:
     tags: [v*]
   pull_request:
+
 jobs:
   Documenter:
     permissions:
@@ -20,14 +23,15 @@ jobs:
       - name: Add registry to environment
         run: |
           julia -e '
-            using Pkg;
+            using Pkg
             Pkg.update()
             Pkg.Registry.add(Pkg.RegistrySpec(; url = "${{ env.public_registry }}"))
             Pkg.Registry.update()
             '
       - name: Install dependencies
-        run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+        run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path = pwd())); Pkg.instantiate()'
       - name: Build and deploy
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: julia --project=docs/ docs/make.jl
+        
