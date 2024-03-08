@@ -396,18 +396,14 @@ function expr(tree::ExprTree, precedence::Int64 = 0)
     priority(Func)         == precedence && return expr(Func, tree)
 
     left = expr(tree, precedence + 1)
-
     while tree.position <= length(tree.exprs)
         head = tree.exprs[tree.position]
-
         if priority(head) == precedence
             tree.position += 1
         else
             break
         end
-
         right = expr(tree, precedence + 1)
-
         if (left isa ExprNode) && (left.head === head) && length(left.args) > 1
             push!(left.args, right)
         else
