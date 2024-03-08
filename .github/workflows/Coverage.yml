@@ -28,6 +28,7 @@ jobs:
         version:
           - '1'
           - '1.8'
+          - '1.9'
         os:
           - ubuntu-latest
         arch:
@@ -53,4 +54,3 @@ jobs:
       - uses: codecov/codecov-action@v3
         with:
           files: lcov.info
-          
