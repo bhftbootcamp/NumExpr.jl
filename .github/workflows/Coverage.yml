@@ -1,4 +1,4 @@
-name: Tests & Coverage
+name: CI
 
 env:
   public_registry: "https://github.com/bhftbootcamp/Orange.git"
