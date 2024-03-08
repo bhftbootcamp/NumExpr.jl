@@ -14,7 +14,15 @@ jobs:
   registry:
     name: Update registry
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
     steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: 1.9
+      - uses: julia-actions/cache@v1
       - name: Configure Git
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq git
@@ -32,26 +40,31 @@ jobs:
         run: |
           julia -e '
             using Pkg
+            
             Pkg.update()
-            Pkg.develop(url = "${{ env.target_repository }}")
             Pkg.add("LocalRegistry")
+            Pkg.develop(url = "${{ env.target_repository }}")
+
             using LocalRegistry
             using TOML
     
-            pkg_name = first(split(basename("${{ env.target_repository }}"), "."))
-            path = joinpath(DEPOT_PATH[1], "dev", pkg_name)
-            toml = TOML.parsefile(joinpath(path, "Project.toml"))
+            package_name = match(r"^.*/(.*?)(\.jl)?(\.git)?$", "${{ env.target_repository }}")
+            package_name == nothing && error("Invalid package name: ${{ env.target_repository }}")
+            package_name = package_name[1]
+
+            package_dir = joinpath(DEPOT_PATH[1], "dev", package_name)
+            toml = TOML.parsefile(joinpath(package_dir, "Project.toml"))
             version = VersionNumber(toml["version"])
     
             LocalRegistry.register(
-                pkg_name,
+                package_name,
                 registry = "${{ env.public_registry }}",
                 commit = true,
                 push = true,
                 ignore_reregistration = true,
             )
   
-            cd(path)
+            cd(package_dir)
             run(`git tag -f "v$version"`)
             run(`git push --force origin "v$version"`)
             '
