@@ -1,0 +1,68 @@
+name: Update registry
+
+env:
+  target_repository: "https://${{ secrets.REGISTRATOR_TOKEN }}@github.com/${{ github.repository }}.git"
+  public_registry: "https://${{ secrets.REGISTRATOR_TOKEN }}@github.com/bhftbootcamp/Orange.git"
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+    
+jobs:
+  registry:
+    name: Update registry
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: 1.9
+      - uses: julia-actions/cache@v1
+      - name: Configure Git
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq git
+          git config --global user.name github-actions[bot]
+          git config --global user.email github-actions[bot]@users.noreply.github.com
+      - name: Add registry to environment
+        run: |
+          julia -e '
+            using Pkg
+            Pkg.update()
+            Pkg.Registry.add(Pkg.RegistrySpec(; url = "${{ env.public_registry }}"))
+            Pkg.Registry.update()
+            '
+      - name: Updating package version in registers
+        run: |
+          julia -e '
+            using Pkg
+            
+            Pkg.add("LocalRegistry")
+            Pkg.develop(url = "${{ env.target_repository }}")
+
+            using LocalRegistry
+            using TOML
+    
+            package_name = match(r"^.*/(.*?)(\.jl)?(\.git)?$", "${{ env.target_repository }}")
+            package_name == nothing && error("Invalid package name: ${{ env.target_repository }}")
+            package_name = package_name[1]
+
+            package_dir = joinpath(DEPOT_PATH[1], "dev", package_name)
+            project_toml = TOML.parsefile(joinpath(package_dir, "Project.toml"))
+            version = VersionNumber(project_toml["version"])
+    
+            LocalRegistry.register(
+                package_name,
+                registry = "${{ env.public_registry }}",
+                commit = true,
+                push = true,
+                ignore_reregistration = true,
+            )
+  
+            run(Cmd(`git tag -f "v$version"`, dir = package_dir))
+            run(Cmd(`git push --force origin "v$version"`, dir = package_dir))
+            '
