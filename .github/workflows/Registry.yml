@@ -2,7 +2,7 @@ name: Update registry
 
 env:
     repository_path: ${{ github.repository }}
-    registry_path: "bhftbootcamp/Orange"
+    registry_path: "bhftbootcamp/Green"
 
 on:
   push:
