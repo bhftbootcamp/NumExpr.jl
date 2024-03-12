@@ -1,7 +1,7 @@
 name: Documenter
 
 env:
-  registry_path: bhftbootcamp/Orange
+  registry_path: bhftbootcamp/Green
 
 on:
   push:
