@@ -6,7 +6,7 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://bhftbootcamp.github.io/NumExpr.jl/dev/)
 [![Build Status](https://github.com/bhftbootcamp/NumExpr.jl/actions/workflows/Coverage.yml/badge.svg?branch=master)](https://github.com/bhftbootcamp/NumExpr.jl/actions/workflows/Coverage.yml?query=branch%3Amaster)
 [![Coverage](https://codecov.io/gh/bhftbootcamp/NumExpr.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/bhftbootcamp/NumExpr.jl)
-[![Registry](https://img.shields.io/badge/registry-Orange-orange)](https://github.com/bhftbootcamp/Orange)
+[![Registry](https://img.shields.io/badge/registry-Green-green)](https://github.com/bhftbootcamp/Green)
 
 The NumExpr library is designed to handle and evaluate arithmetic expressions. It enables parsing and analyzing expressions, as well as performing calculations with user-defined functions.
 
