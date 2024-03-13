@@ -11,9 +11,13 @@
 The NumExpr library is designed to handle and evaluate arithmetic expressions. It enables parsing and analyzing expressions, as well as performing calculations with user-defined functions.
 
 ## Installation
-To install NumExpr, simply use the Julia package manager:
+If you haven't installed our [local register](https://github.com/bhftbootcamp/Green) yet, do that first:
+```
+] registry add https://github.com/bhftbootcamp/Green.git
+```
 
-```julia
+Then, to install NumExpr, simply use the Julia package manager:
+```
 ] add NumExpr
 ```
 
