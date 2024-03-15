@@ -11,7 +11,7 @@ makedocs(;
         repolink = "https://github.com/bhftbootcamp/NumExpr.jl.git",
         canonical = "https://bhftbootcamp.github.io/NumExpr.jl",
         edit_link = "master",
-        assets = String[],
+        assets = String["assets/favicon.ico"],
     ),
     pages = [
         "Home" => "index.md",
