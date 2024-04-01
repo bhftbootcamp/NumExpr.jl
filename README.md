@@ -89,9 +89,9 @@ end
 
 call(::VarCtx, x...) = NumExpr.call(x...)
 
-const local_parameters = Dict{String, Float64}(
-    "rtol" => 1e-3,
-    "atol" => 1e-2,
+const local_parameters = Dict{String,Float64}(
+    "rtol" => 1e-3, 
+    "atol" => 1e-2
 )
 
 function my_eval(::VarCtx, var::Variable{LocalScope})
