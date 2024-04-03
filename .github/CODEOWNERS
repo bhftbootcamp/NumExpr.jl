@@ -1,9 +1,7 @@
 /.github/ @gryumov
-/docs/ @gryumov @DeevsDeevs
 /src/ @gryumov @DeevsDeevs
 /test/ @gryumov @DeevsDeevs
-/Project.toml @gryumov @DeevsDeevs
-/.JuliaFormatter.toml @gryumov @DeevsDeevs
-/.gitignore @gryumov @DeevsDeevs
+/.JuliaFormatter.toml @gryumov
+/.gitignore @gryumov
 /LICENSE @gryumov
-/README.md @gryumov @DeevsDeevs
+/Project.toml @gryumov
