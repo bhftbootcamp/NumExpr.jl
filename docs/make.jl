@@ -7,7 +7,7 @@ makedocs(;
     modules = [NumExpr],
     sitename = "NumExpr.jl",
     format = Documenter.HTML(;
-        repolink = "https://github.com/bhftbootcamp/NumExpr.jl.git",
+        repolink = "https://github.com/bhftbootcamp/NumExpr.jl",
         canonical = "https://bhftbootcamp.github.io/NumExpr.jl",
         edit_link = "master",
         assets = String["assets/favicon.ico"],
