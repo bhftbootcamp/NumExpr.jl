@@ -1,6 +1,4 @@
-<img src=docs/src/assets/readme_logo.png height=100 width=auto>
-
-# NumExpr
+# NumExpr.jl
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://bhftbootcamp.github.io/NumExpr.jl/stable/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://bhftbootcamp.github.io/NumExpr.jl/dev/)
