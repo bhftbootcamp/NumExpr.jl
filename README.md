@@ -1,5 +1,3 @@
-<img src=docs/src/assets/readme_logo.png height=60 width=auto>
-
 # NumExpr.jl
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://bhftbootcamp.github.io/NumExpr.jl/stable/)
