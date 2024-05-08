@@ -1,35 +1,103 @@
 # NumExpr.jl
 
-The NumExpr library is designed to parse and evaluate arithmetic expressions. It allows for the analysis of these expressions and can perform calculations using user-defined functions.
+The NumExpr library is designed to handle and evaluate arithmetic expressions. It enables parsing and analyzing expressions, as well as performing calculations with user-defined functions.
 
-## Quickstart
+## Installation
+If you haven't installed our [local registry](https://github.com/bhftbootcamp/Green) yet, do that first:
+```
+] registry add https://github.com/bhftbootcamp/Green.git
+```
 
-Simple example of basic usage.
+Then, to install NumExpr, simply use the Julia package manager:
+```
+] add NumExpr
+```
+
+## Usage
+
+Here is an example usage of NumExpr:
 
 ```julia
 using NumExpr
 using NumExpr: Func, Variable
 
-colors = Dict{String,UInt32}(
-    "color"                 => 0xffffff,
-    "color[name='red']"     => 0xff0000,
-    "color[name='green']"   => 0x00ff00,
-    "color[name='blue']"    => 0x0000ff,
-    "color[name='yellow']"  => 0xffff00,
-    "color[name='cyan']"    => 0x00ffff,
-    "color[name='magenta']" => 0xff00ff,
+const local_vars = Dict{String,Float64}(
+    "my_var"           => 1,
+    "my_var{tag1='x'}" => 2,
 )
 
-NumExpr.eval_expr(var::Variable) = get(colors, var[], NaN)
+const global_vars = Dict{String,Float64}(
+    "my_var"           => 3,
+    "my_var[tag1='x']" => 4,
+)
 
-function NumExpr.call(::Func{:mix_colors}, c1::UInt32, c2::UInt32)
-    r = ((c1 >> 16) & 0xFF + (c2 >> 16) & 0xFF) >> 1
-    g = ((c1 >> 8)  & 0xFF + (c2 >> 8)  & 0xFF) >> 1
-    b = (c1         & 0xFF +  c2        & 0xFF) >> 1
-    return (r << 16) | (g << 8) | b
+function NumExpr.eval_expr(var::Variable)
+    return get(isglobal_scope(var) ? global_vars : local_vars, var[], NaN)
 end
 
-expr = parse_expr("mix_colors(color[name='red'], color[name='green'])")
+function NumExpr.call(::Func{:maximum}, x::Number...)
+    return maximum(x)
+end
 
-eval_expr(expr)
+function NumExpr.call(::Func{:sin}, x::Number)
+    return sin(x)
+end
+
+expr = parse_expr("sin(maximum({my_var}, [my_var], my_var{tag1='x'}, my_var[tag1='x'])) + 10");
+
+julia> eval_expr(expr)
+9.243197504692072
+```
+
+The package lets you set up an expression and then calculate it using data from anywhere, like databases or APIs.
+
+```julia
+using Serde
+using EasyCurl
+
+using NumExpr
+using NumExpr: Func, Variable, NumVal, StrVal, ExprNode, GlobalScope, LocalScope
+
+struct VarCtx
+    base_url::String
+end
+
+struct avgPrice
+    price::Float64
+end
+
+function my_eval(ctx::VarCtx, var::Variable{GlobalScope})
+    http_request = curl_get(ctx.base_url, query = "symbol=" * var[])
+    return deser_json(avgPrice, curl_body(http_request)).price
+end
+
+my_eval(::VarCtx, x::NumVal) = x[]
+my_eval(::VarCtx, x::StrVal) = x[]
+
+function my_eval(ctx::VarCtx, node::ExprNode)
+    args = map(x -> my_eval(ctx, x), node.args)
+    return call(ctx, node.head, args...)
+end
+
+call(::VarCtx, x...) = NumExpr.call(x...)
+
+const local_parameters = Dict{String,Float64}(
+    "rtol" => 1e-3, 
+    "atol" => 1e-2
+)
+
+function my_eval(::VarCtx, var::Variable{LocalScope})
+    return get(local_parameters, var[], NaN)
+end
+
+function NumExpr.call(::Func{:isapprox}, x::Number, y::Number, atol::Number, rtol::Number)
+    return isapprox(x, y; atol, rtol)
+end
+
+vars_context = VarCtx("https://api.binance.com/api/v3/avgPrice")
+
+node = parse_expr("isapprox([ADABTC] * [BTCUSDT], [ADAUSDT], atol, rtol)")
+
+julia> my_eval(vars_context, node)
+true
 ```
