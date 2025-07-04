@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Home · NumExpr.jl</title><meta name="title" content="Home · NumExpr.jl"/><meta property="og:title" content="Home · NumExpr.jl"/><meta property="twitter:title" content="Home · NumExpr.jl"/><meta name="description" content="Documentation for NumExpr.jl."/><meta property="og:description" content="Documentation for NumExpr.jl."/><meta property="twitter:description" content="Documentation for NumExpr.jl."/><meta property="og:url" content="https://bhftbootcamp.github.io/NumExpr.jl/"/><meta property="twitter:url" content="https://bhftbootcamp.github.io/NumExpr.jl/"/><link rel="canonical" href="https://bhftbootcamp.github.io/NumExpr.jl/"/><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="search_index.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script><link href="assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href><img src="assets/logo.png" alt="NumExpr.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>Home</a><ul class="internal"><li><a class="tocitem" href="#Installation"><span>Installation</span></a></li><li><a class="tocitem" href="#Usage"><span>Usage</span></a></li></ul></li><li><a class="tocitem" href="pages/expr_syntax/">Expression Syntax</a></li><li><a class="tocitem" href="pages/api_reference/">API reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Home</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Home</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/bhftbootcamp/NumExpr.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/bhftbootcamp/NumExpr.jl/blob/master/docs/src/index.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="NumExpr.jl"><a class="docs-heading-anchor" href="#NumExpr.jl">NumExpr.jl</a><a id="NumExpr.jl-1"></a><a class="docs-heading-anchor-permalink" href="#NumExpr.jl" title="Permalink"></a></h1><p>The NumExpr library is designed to handle and evaluate arithmetic expressions. It enables parsing and analyzing expressions, as well as performing calculations with user-defined functions.</p><h2 id="Installation"><a class="docs-heading-anchor" href="#Installation">Installation</a><a id="Installation-1"></a><a class="docs-heading-anchor-permalink" href="#Installation" title="Permalink"></a></h2><p>If you haven&#39;t installed our <a href="https://github.com/bhftbootcamp/Green">local registry</a> yet, do that first:</p><pre><code class="nohighlight hljs">] registry add https://github.com/bhftbootcamp/Green.git</code></pre><p>Then, to install NumExpr, simply use the Julia package manager:</p><pre><code class="nohighlight hljs">] add NumExpr</code></pre><h2 id="Usage"><a class="docs-heading-anchor" href="#Usage">Usage</a><a id="Usage-1"></a><a class="docs-heading-anchor-permalink" href="#Usage" title="Permalink"></a></h2><p>Here is an example usage of NumExpr:</p><pre><code class="language-julia hljs">using NumExpr
+using NumExpr: Func, Variable
+
+const local_vars = Dict{String,Float64}(
+    &quot;my_var&quot;           =&gt; 1,
+    &quot;my_var{tag1=&#39;x&#39;}&quot; =&gt; 2,
+)
+
+const global_vars = Dict{String,Float64}(
+    &quot;my_var&quot;           =&gt; 3,
+    &quot;my_var[tag1=&#39;x&#39;]&quot; =&gt; 4,
+)
+
+function NumExpr.eval_expr(var::Variable)
+    return get(isglobal_scope(var) ? global_vars : local_vars, var[], NaN)
+end
+
+function NumExpr.call(::Func{:maximum}, x::Number...)
+    return maximum(x)
+end
+
+function NumExpr.call(::Func{:sin}, x::Number)
+    return sin(x)
+end
+
+expr = parse_expr(&quot;sin(maximum({my_var}, [my_var], my_var{tag1=&#39;x&#39;}, my_var[tag1=&#39;x&#39;])) + 10&quot;);
+
+julia&gt; eval_expr(expr)
+9.243197504692072</code></pre><p>The package lets you set up an expression and then calculate it using data from anywhere, like databases or APIs.</p><pre><code class="language-julia hljs">using Serde
+using EasyCurl
+
+using NumExpr
+using NumExpr: Func, Variable, NumVal, StrVal, ExprNode, GlobalScope, LocalScope
+
+struct VarCtx
+    base_url::String
+end
+
+struct avgPrice
+    price::Float64
+end
+
+function my_eval(ctx::VarCtx, var::Variable{GlobalScope})
+    http_request = curl_get(ctx.base_url, query = &quot;symbol=&quot; * var[])
+    return deser_json(avgPrice, curl_body(http_request)).price
+end
+
+my_eval(::VarCtx, x::NumVal) = x[]
+my_eval(::VarCtx, x::StrVal) = x[]
+
+function my_eval(ctx::VarCtx, node::ExprNode)
+    args = map(x -&gt; my_eval(ctx, x), node.args)
+    return call(ctx, node.head, args...)
+end
+
+call(::VarCtx, x...) = NumExpr.call(x...)
+
+const local_parameters = Dict{String,Float64}(
+    &quot;rtol&quot; =&gt; 1e-3, 
+    &quot;atol&quot; =&gt; 1e-2
+)
+
+function my_eval(::VarCtx, var::Variable{LocalScope})
+    return get(local_parameters, var[], NaN)
+end
+
+function NumExpr.call(::Func{:isapprox}, x::Number, y::Number, atol::Number, rtol::Number)
+    return isapprox(x, y; atol, rtol)
+end
+
+vars_context = VarCtx(&quot;https://api.binance.com/api/v3/avgPrice&quot;)
+
+node = parse_expr(&quot;isapprox([ADABTC] * [BTCUSDT], [ADAUSDT], atol, rtol)&quot;)
+
+julia&gt; my_eval(vars_context, node)
+true</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="pages/expr_syntax/">Expression Syntax »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Monday 30 December 2024 14:33">Monday 30 December 2024</span>. Using Julia version 1.11.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
