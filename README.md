@@ -73,8 +73,8 @@ struct avgPrice
 end
 
 function my_eval(ctx::VarCtx, var::Variable{GlobalScope})
-    http_request = curl_get(ctx.base_url, query = "symbol=" * var[])
-    return deser_json(avgPrice, curl_body(http_request)).price
+    http_request = http_get(ctx.base_url, query = "symbol=" * var[], verbose = true)
+    return deser_json(avgPrice, http_body(http_request)).price
 end
 
 my_eval(::VarCtx, x::NumVal) = x[]
