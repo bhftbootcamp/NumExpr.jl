@@ -5,6 +5,8 @@ export parse_expr,
     isglobal_scope,
     islocal_scope
 
+#__ exceptions
+
 """
     SyntaxError
 
@@ -23,11 +25,9 @@ macro err_syntax(err)
     return esc(:(throw(SyntaxError($err))))
 end
 
-abstract type AbstractExpr end
+#__ abstract types
 
-abstract type AbstractScope end
-struct GlobalScope <: AbstractScope end
-struct LocalScope <: AbstractScope end
+abstract type AbstractExpr end
 
 abstract type AbstractValue <: AbstractExpr end
 abstract type AbstractOperator <: AbstractExpr end
@@ -36,6 +36,14 @@ abstract type AbstractLexisOperator <: AbstractOperator end
 abstract type AbstractLogicOperator <: AbstractOperator end
 abstract type AbstractArithmeticOperator <: AbstractOperator end
 abstract type AbstractFuncOperator <: AbstractOperator end
+
+#__ scope
+
+abstract type AbstractScope end
+struct GlobalScope <: AbstractScope end
+struct LocalScope <: AbstractScope end
+
+#__ includes
 
 include("utils.jl")
 include("parser.jl")

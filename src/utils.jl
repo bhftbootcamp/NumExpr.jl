@@ -1,23 +1,30 @@
 # utils
 
-function isnumber(c::Char)::Bool
-    return (c >= '0') & (c <= '9')
-end
+#__ char predicates
 
-function isalphabetic(c::Char)::Bool
-    return 'a' <= c <= 'z' || 'A' <= c <= 'Z'
-end
+isnumber(c::Char)::Bool     = (c >= '0') & (c <= '9')
+isalphabetic(c::Char)::Bool = ('a' <= c <= 'z') || ('A' <= c <= 'Z')
+isplusmin(c::Char)::Bool    = c == '+' || c == '-'
+isexponent(c::Char)::Bool   = c == 'e' || c == 'E'
+isdot(c::Char)::Bool        = c == '.'
+isunderline(c::Char)::Bool  = c == '_'
+iscomma(c::Char)::Bool      = c == ','
+isquote(c::Char)::Bool      = c == '\''
+iseqsign(c::Char)::Bool     = c == '='
 
-function isplusmin(c::Char)::Bool
-    return c == '+' || c == '-'
-end
+islpar(c::Char)::Bool    = c == '('
+isrpar(c::Char)::Bool    = c == ')'
+islsquare(c::Char)::Bool = c == '['
+isrsquare(c::Char)::Bool = c == ']'
+islbrace(c::Char)::Bool  = c == '{'
+isrbrace(c::Char)::Bool  = c == '}'
 
 function isarithmetic(c::Char)::Bool
     return c == '+' || c == '-' || c == '*' || c == '/' || c == '^' || c == '%'
 end
 
 function issimplelogical(c::Char)::Bool
-    return c == '!' || c == '>' || c == '<' || c == '&' || c == '|'
+    return c == '>' || c == '<'
 end
 
 function ismultilogical(c1::Char, c2::Char)::Bool
@@ -29,47 +36,33 @@ function ismultilogical(c1::Char, c2::Char)::Bool
            c1 == '|' && c2 == '|'
 end
 
-function isnannumber(c1::Char, c2::Char, c3::Char)::Bool
-    return c1 == 'N' && c2 == 'a' && c3 == 'N'
-end
+#__ keyword predicates
+
+isnannumber(c1::Char, c2::Char, c3::Char)::Bool = c1 == 'N' && c2 == 'a' && c3 == 'N'
 
 function istruenumber(c1::Char, c2::Char, c3::Char, c4::Char)::Bool
     return c1 == 't' && c2 == 'r' && c3 == 'u' && c4 == 'e'
 end
 
 function isfalsenumber(c1::Char, c2::Char, c3::Char, c4::Char, c5::Char)::Bool
-    return c1 == 'f' && c2 == 'a' && c3 == 'l' && c4 == 's' || c5 == 'e'
+    return c1 == 'f' && c2 == 'a' && c3 == 'l' && c4 == 's' && c5 == 'e'
 end
 
-isquote(c::Char)             = c == '\''
-isequal(c::Char)             = c == '='
-isdot(c::Char)::Bool         = c == '.'
-isunderline(c::Char)::Bool   = c == '_'
-isqmark(c::Char)::Bool       = c == '?'
-iscolon(c::Char)::Bool       = c == ':'
-iscomma(c::Char)::Bool       = c == ','
-issemicolon(c::Char)::Bool   = c == ';'
-isexponent(c::Char)::Bool    = c == 'e' || c == 'E'
-issinglequote(c::Char)::Bool = c == '''
-islpar(c::Char)::Bool        = c == '('
-isrpar(c::Char)::Bool        = c == ')'
-islsquare(c::Char)::Bool     = c == '['
-isrsquare(c::Char)::Bool     = c == ']'
-islbrace(c::Char)::Bool      = c == '{'
-isrbrace(c::Char)::Bool      = c == '}'
+#__ scope brackets
 
-isopenbracket(::Type{<:GlobalScope}, c::Char)  = @inline islsquare(c)
-isclosebracket(::Type{<:GlobalScope}, c::Char) = @inline isrsquare(c)
-isopenbracket(::Type{<:LocalScope}, c::Char)   = @inline islbrace(c)
-isclosebracket(::Type{<:LocalScope}, c::Char)  = @inline isrbrace(c)
+isopenbracket(::Type{<:GlobalScope}, c::Char)::Bool  = islsquare(c)
+isclosebracket(::Type{<:GlobalScope}, c::Char)::Bool = isrsquare(c)
+isopenbracket(::Type{<:LocalScope}, c::Char)::Bool   = islbrace(c)
+isclosebracket(::Type{<:LocalScope}, c::Char)::Bool  = isrbrace(c)
 
-openbracket(::Type{<:GlobalScope})  = "["
-closebracket(::Type{<:GlobalScope}) = "]"
-openbracket(::Type{<:LocalScope})   = "{"
-closebracket(::Type{<:LocalScope})  = "}"
+openbracket(::Type{<:GlobalScope})::String  = "["
+closebracket(::Type{<:GlobalScope})::String = "]"
+openbracket(::Type{<:LocalScope})::String   = "{"
+closebracket(::Type{<:LocalScope})::String  = "}"
 
-wrap_value(x::String) = x
+#__ variable formatting
 
-function to_var(::Type{S}, n::AbstractString, t::AbstractDict{String,String}) where {S<:AbstractScope}
-    return n * openbracket(S) * join(sort(["$(k)='$(wrap_value(v))'" for (k, v) in t]), ',') * closebracket(S)
+function to_var(::Type{S}, n::AbstractString, t::AbstractDict{String,String})::String where {S<:AbstractScope}
+    pairs = sort(["$(k)='$(v)'" for (k, v) in t])
+    return n * openbracket(S) * join(pairs, ',') * closebracket(S)
 end

@@ -2,15 +2,18 @@
 
 #__ Logic
 
-call(::Logic{:(>)}, x::Number, y::Number) = x > y
-call(::Logic{:(<)}, x::Number, y::Number) = x < y
+call(::Logic{:(>)}, x::Number, y::Number)  = x > y
+call(::Logic{:(<)}, x::Number, y::Number)  = x < y
 call(::Logic{:(<=)}, x::Number, y::Number) = x <= y
 call(::Logic{:(>=)}, x::Number, y::Number) = x >= y
 call(::Logic{:(!=)}, x::Number, y::Number) = x != y
 call(::Logic{:(==)}, x::Number, y::Number) = x == y
 
-call(::Logic{:(>)}, x::String, y::String) = x > y
-call(::Logic{:(<)}, x::String, y::String) = x < y
+call(::Logic{:&&}, x::Number, y::Number) = (x != 0) && (y != 0)
+call(::Logic{:||}, x::Number, y::Number) = (x != 0) || (y != 0)
+
+call(::Logic{:(>)}, x::String, y::String)  = x > y
+call(::Logic{:(<)}, x::String, y::String)  = x < y
 call(::Logic{:(<=)}, x::String, y::String) = x <= y
 call(::Logic{:(>=)}, x::String, y::String) = x >= y
 call(::Logic{:(!=)}, x::String, y::String) = x != y
@@ -18,34 +21,42 @@ call(::Logic{:(==)}, x::String, y::String) = x == y
 
 #__ Arithmetic
 
-call(::Arithmetic{:(+)}, x::Number...) = sum(x)
-call(::Arithmetic{:(-)}, x::Number...) = mapreduce(t -> t, -, x)
-call(::Arithmetic{:(/)}, x::Number...) = mapreduce(t -> t, /, x)
-call(::Arithmetic{:(*)}, x::Number...) = mapreduce(t -> t, *, x)
-call(::Arithmetic{:(^)}, x::Number...) = mapreduce(t -> t, ^, x)
-
-call(::Arithmetic{:(*)}, x::String...) = *(x...)
-
 call(::Arithmetic{:(+)}, x::Number, y::Number) = x + y
 call(::Arithmetic{:(-)}, x::Number, y::Number) = x - y
-call(::Arithmetic{:(/)}, x::Number, y::Number) = x / y
 call(::Arithmetic{:(*)}, x::Number, y::Number) = x * y
+call(::Arithmetic{:(/)}, x::Number, y::Number) = x / y
 call(::Arithmetic{:(^)}, x::Number, y::Number) = x^y
+call(::Arithmetic{:(%)}, x::Number, y::Number) = x % y
 
+call(::Arithmetic{:(+)}, x::Number...) = sum(x)
+call(::Arithmetic{:(-)}, x::Number...) = foldl(-, x)
+call(::Arithmetic{:(*)}, x::Number...) = foldl(*, x)
+call(::Arithmetic{:(/)}, x::Number...) = foldl(/, x)
+call(::Arithmetic{:(^)}, x::Number...) = foldl(^, x)
+call(::Arithmetic{:(%)}, x::Number...) = foldl(%, x)
+
+call(::Arithmetic{:(+)}, x::Number) = +x
 call(::Arithmetic{:(-)}, x::Number) = -x
 
+call(::Arithmetic{:(*)}, x::String...) = *(x...)
 call(::Arithmetic{:(^)}, x::String, y::Number) = x^Int64(y)
 
+#__ Functions
+
 call(::Func{:sqrt}, x::Number) = sqrt(x)
-call(::Func{:abs}, x::Number) = abs(x)
-call(::Func{:sin}, x::Number) = sin(x)
-call(::Func{:cos}, x::Number) = cos(x)
+call(::Func{:abs}, x::Number)  = abs(x)
+call(::Func{:sin}, x::Number)  = sin(x)
+call(::Func{:cos}, x::Number)  = cos(x)
 call(::Func{:atan}, x::Number) = atan(x)
-call(::Func{:exp}, x::Number) = exp(x)
-call(::Func{:log}, x::Number) = log(x)
+call(::Func{:exp}, x::Number)  = exp(x)
+call(::Func{:log}, x::Number)  = log(x)
+
+#__ convert
 
 Base.convert(::Type{Number}, x::NumVal) = x[]
 Base.convert(::Type{String}, x::StrVal) = x[]
+
+#__ eval_expr
 
 """
     eval_expr(x::Variable)
@@ -105,6 +116,6 @@ julia> eval_expr(expr)
 ```
 """
 function eval_expr(node::ExprNode)
-    args = map(x -> eval_expr(x), node.args)
+    args = map(eval_expr, node.args)
     return call(node.head, args...)
 end

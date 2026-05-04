@@ -21,7 +21,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           registry: bhftbootcamp/Green
       - uses: julia-actions/setup-julia@latest
-      - uses: julia-actions/cache@v2
+      - uses: julia-actions/cache@v3
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path = pwd())); Pkg.instantiate()'
       - name: Build and deploy
@@ -30,7 +30,7 @@ jobs:
         run: julia --project=docs/ docs/make.jl
       - name: Make comment with preview link
         if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened'}}
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             github.rest.issues.createComment({

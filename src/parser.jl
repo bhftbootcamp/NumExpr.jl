@@ -1,12 +1,16 @@
 # parser
 
+#__ lexis operators
+
 struct Comma <: AbstractLexisOperator end
 struct LPar  <: AbstractLexisOperator end
 struct RPar  <: AbstractLexisOperator end
 
-Base.show(io::IO, ::LPar) = print(io, "(")
-Base.show(io::IO, ::RPar) = print(io, ")")
+Base.show(io::IO, ::LPar)  = print(io, "(")
+Base.show(io::IO, ::RPar)  = print(io, ")")
 Base.show(io::IO, ::Comma) = print(io, ",")
+
+#__ parametric operators
 
 struct Logic{x} <: AbstractLogicOperator
     Logic{x}() where {x} = new{x}()
@@ -14,7 +18,6 @@ end
 
 Logic(x::Symbol) = Logic{x}()
 Logic(x::Char...) = Logic(Symbol(x...))
-Logic(x::String) = Logic(Symbol(x))
 operator(::Logic{x}) where {x} = x
 
 struct Arithmetic{x} <: AbstractArithmeticOperator
@@ -23,17 +26,19 @@ end
 
 Arithmetic(x::Symbol) = Arithmetic{x}()
 Arithmetic(x::Char...) = Arithmetic(Symbol(x...))
-Arithmetic(x::String) = Arithmetic(Symbol(x))
 operator(::Arithmetic{x}) where {x} = x
 
 struct Func{x} <: AbstractFuncOperator
     Func{x}() where {x} = new{x}()
 end
 
-Func(x::Char...) = Func{Symbol(x...)}()
+Func(x::Symbol) = Func{x}()
+Func(x::Char...) = Func(Symbol(x...))
 operator(::Func{x}) where {x} = x
 
 Base.show(io::IO, n::AbstractOperator) = print(io, operator(n))
+
+#__ value types
 
 """
     Variable{S<:AbstractScope}
@@ -100,34 +105,34 @@ struct NumVal{T<:Real} <: AbstractValue
     NumVal{T}(v::Vector{Char}) where {T<:Real} = new{T}(Base.parse(T, String(v)))
 end
 
-var_name(x::Variable) = x.name
-var_tags(x::Variable) = x.tags
+var_name(x::Variable)::String = x.name
+var_tags(x::Variable)::Dict{String,String} = x.tags
 Base.getindex(x::AbstractValue) = getfield(x, :val)
 Base.show(io::IO, n::AbstractValue) = print(io, n[])
 
-#__ Variable Parsing
+#__ variable parsing
 
-function parse_var_format1(::Type{S}, chars::Vector{Char}) where {S<:AbstractScope}
+function parse_var_format1(::Type{S}, chars::Vector{Char})::Variable{S} where {S<:AbstractScope}
     str_val = String(chars)
     return Variable{S}(str_val, str_val, Dict{String,String}())
 end
 
-function parse_var_format2(::Type{S}, chars::Vector{Char}) where {S<:AbstractScope}
+function parse_var_format2(::Type{S}, chars::Vector{Char})::Variable{S} where {S<:AbstractScope}
     tags = Dict{String,String}()
     len = length(chars)
-    name, key, value = "", "", ""
+    key = ""
     index = 1
-    # find the variable name before the '[' or '{'
+    name_chars = Char[]
     while index <= len && !isopenbracket(S, chars[index])
-        if isletter(chars[index]) || isunderline(chars[index])
-            name *= chars[index]
+        c = chars[index]
+        if isletter(c) || isunderline(c)
+            push!(name_chars, c)
         end
         index += 1
     end
+    name = String(name_chars)
     isempty(name) && @err_syntax "invalid indicator: $(String(chars))"
-    # skip the '[' or '{'
     index += 1
-    # parse the key-value pairs
     while index <= len && !isclosebracket(S, chars[index])
         if isletter(chars[index])
             key_start = index
@@ -136,23 +141,20 @@ function parse_var_format2(::Type{S}, chars::Vector{Char}) where {S<:AbstractSco
             end
             key = String(chars[key_start:index-1])
         elseif isquote(chars[index])
-            if key == ""
-                @err_syntax "no key for value at index $index: $(String(chars[index:end]))"
-            end
-            value_start = index + 1 # skip the opening quote
+            key == "" && @err_syntax "no key for value at index $index: $(String(chars[index:end]))"
+            value_start = index + 1
             index = value_start
             while index <= len && !isquote(chars[index])
                 index += 1
             end
             index > len && @err_syntax "unterminated string in $(String(chars))"
-            value = String(chars[value_start:index-1])
-            tags[key] = value
-            key = ""    # clear the key
-            index += 1  # skip the closing quote
-        elseif isequal(chars[index])
-            index += 1  # skip the delimiter
+            tags[key] = String(chars[value_start:index-1])
+            key = ""
+            index += 1
+        elseif iseqsign(chars[index])
+            index += 1
         elseif iscomma(chars[index])
-            index += 1  # skip the comma and whitespace
+            index += 1
             while index <= len && isspace(chars[index])
                 index += 1
             end
@@ -167,121 +169,116 @@ function parse_var_format2(::Type{S}, chars::Vector{Char}) where {S<:AbstractSco
     return Variable{S}(to_var(S, name, tags), name, tags)
 end
 
-#__ Tokenize
+#__ tokenizer
 
-function skip_while(
-    condition::Function,
-    chars::Vector{Char},
-    index::UInt64,
-    len::UInt64,
-)::UInt64
+function skip_while(condition, chars::Vector{Char}, index::Int, len::Int)::Int
     while condition(chars[index]) && index != len
         index += 1
     end
     return index
 end
 
-function tokenize(h::Vector{Char})::Vector{AbstractExpr}
-    len::UInt64 = length(h)
+function tokenize(chars::Vector{Char})::Vector{AbstractExpr}
+    len::Int = length(chars)
     exprs::Vector{AbstractExpr} = AbstractExpr[]
-    l::UInt64, r::UInt64 = 1, 1
-    lpar::UInt64, rpar::UInt64 = 0, 0
+    l::Int, r::Int = 1, 1
+    lpar::Int, rpar::Int = 0, 0
 
     while r <= len
         l = r
-        if isspace(h[r])
+        if isspace(chars[r])
             r += 1
-        elseif isnumber(h[r])
-            r = skip_while(x -> isnumber(x) || isunderline(x), h, r + 1, len)
-            if isdot(h[r])
-                r = skip_while(x -> isnumber(x) || isunderline(x), h, r + 1, len)
+        elseif isnumber(chars[r])
+            r = skip_while(x -> isnumber(x) || isunderline(x), chars, r + 1, len)
+            if isdot(chars[r])
+                r = skip_while(x -> isnumber(x) || isunderline(x), chars, r + 1, len)
             end
-            if isexponent(h[r])
+            if isexponent(chars[r])
                 r += 1
-                isplusmin(h[r]) && (r += 1)
+                isplusmin(chars[r]) && (r += 1)
                 prev = r
-                r = skip_while(x -> isnumber(x) || isunderline(x), h, r, len)
+                r = skip_while(x -> isnumber(x) || isunderline(x), chars, r, len)
                 r == prev && @err_syntax "invalid number in e notation"
             end
-            push!(exprs, NumVal{Float64}(h[l:r-1]))
-        elseif islsquare(h[r])
-            r = skip_while(x -> !isrsquare(x) && !islsquare(x), h, r + 1, len)
+            push!(exprs, NumVal{Float64}(chars[l:r-1]))
+        elseif islsquare(chars[r])
+            r = skip_while(x -> !isrsquare(x) && !islsquare(x), chars, r + 1, len)
             r == len && @err_syntax "space before ']' not allowed"
-            islsquare(h[r]) && @err_syntax "extra token '[' after end of expression"
-            push!(exprs, parse_var_format1(GlobalScope, h[l+1:r-1]))
+            islsquare(chars[r]) && @err_syntax "extra token '[' after end of expression"
+            push!(exprs, parse_var_format1(GlobalScope, chars[l+1:r-1]))
             r += 1
-        elseif islbrace(h[r])
-            r = skip_while(x -> !isrbrace(x) && !islbrace(x), h, r + 1, len)
+        elseif islbrace(chars[r])
+            r = skip_while(x -> !isrbrace(x) && !islbrace(x), chars, r + 1, len)
             r == len && @err_syntax "space before '}' not allowed"
-            islbrace(h[r]) && @err_syntax "extra token '{' after end of expression"
-            push!(exprs, parse_var_format1(LocalScope, h[l+1:r-1]))
+            islbrace(chars[r]) && @err_syntax "extra token '{' after end of expression"
+            push!(exprs, parse_var_format1(LocalScope, chars[l+1:r-1]))
             r += 1
-        elseif issinglequote(h[r])
+        elseif isquote(chars[r])
             r + 1 == len && @err_syntax "quote symbol after end of expression"
-            r = skip_while(x -> !issinglequote(x), h, r + 1, len)
+            r = skip_while(x -> !isquote(x), chars, r + 1, len)
             r == len && @err_syntax "quote expression is not properly closed"
-            push!(exprs, StrVal(h[l+1:r-1]))
+            push!(exprs, StrVal(chars[l+1:r-1]))
             r += 1
-        elseif isalphabetic(h[r])
+        elseif isalphabetic(chars[r])
             r = skip_while(x -> isalphabetic(x) ||
                                 isnumber(x)     ||
-                                isunderline(x), h, r + 1, len)
-            if isdot(h[r]) && (r < len) && islpar(h[r+1])
+                                isunderline(x), chars, r + 1, len)
+            if isdot(chars[r]) && (r < len) && islpar(chars[r+1])
                 @err_syntax "broadcasting prohibited"
             end
             r = skip_while(x -> isalphabetic(x) ||
                                 isnumber(x)     ||
                                 isunderline(x)  ||
-                                isdot(x), h, r, len)
-            chars = h[l:r-1]
-            char_length = r - l
-            expr = if islpar(h[r])
-                Func(chars...)
-            elseif islsquare(h[r])
+                                isdot(x), chars, r, len)
+            tok = chars[l:r-1]
+            tok_length = r - l
+            expr = if islpar(chars[r])
+                Func(tok...)
+            elseif islsquare(chars[r])
                 l = r + 1
-                r = skip_while(x -> !isrsquare(x) && !islsquare(x), h, r + 1, len)
+                r = skip_while(x -> !isrsquare(x) && !islsquare(x), chars, r + 1, len)
                 r == len && @err_syntax "space before ']' not allowed"
-                islsquare(h[r]) && @err_syntax "extra token '[' after end of expression"
+                islsquare(chars[r]) && @err_syntax "extra token '[' after end of expression"
                 r += 1
-                parse_var_format2(GlobalScope, [chars; h[l-1:r-1]])
-            elseif islbrace(h[r])
+                parse_var_format2(GlobalScope, [tok; chars[l-1:r-1]])
+            elseif islbrace(chars[r])
                 l = r + 1
-                r = skip_while(x -> !isrbrace(x) && !islbrace(x), h, r + 1, len)
+                r = skip_while(x -> !isrbrace(x) && !islbrace(x), chars, r + 1, len)
                 r == len && @err_syntax "space before '}' not allowed"
-                islbrace(h[r]) && @err_syntax "extra token '{' after end of expression"
+                islbrace(chars[r]) && @err_syntax "extra token '{' after end of expression"
                 r += 1
-                parse_var_format2(LocalScope, [chars; h[l-1:r-1]])
-            elseif char_length == 3 && isnannumber(chars...)
-                NumVal{Float64}(chars)
-            elseif (char_length == 4 && istruenumber(chars...)) ||
-                   (char_length == 5 && isfalsenumber(chars...))
-                NumVal{Bool}(chars)
+                parse_var_format2(LocalScope, [tok; chars[l-1:r-1]])
+            elseif tok_length == 3 && isnannumber(tok...)
+                NumVal{Float64}(tok)
+            elseif (tok_length == 4 && istruenumber(tok...)) ||
+                   (tok_length == 5 && isfalsenumber(tok...))
+                NumVal{Bool}(tok)
             else
-                parse_var_format1(LocalScope, chars)
+                parse_var_format1(LocalScope, tok)
             end
             push!(exprs, expr)
-        elseif iscomma(h[r])
+        elseif iscomma(chars[r])
             push!(exprs, Comma())
             r += 1
-        elseif islpar(h[r])
+        elseif islpar(chars[r])
             push!(exprs, LPar())
             r += 1
             lpar += 1
-        elseif isrpar(h[r])
+        elseif isrpar(chars[r])
             push!(exprs, RPar())
             r += 1
             rpar += 1
-        elseif ismultilogical(h[r], h[r+1])
-            push!(exprs, Logic(h[r], h[r+1]))
+        elseif ismultilogical(chars[r], chars[r+1])
+            push!(exprs, Logic(chars[r], chars[r+1]))
             r += 2
-        elseif issimplelogical(h[r])
-            push!(exprs, Logic(h[r]))
+        elseif issimplelogical(chars[r])
+            push!(exprs, Logic(chars[r]))
             r += 1
-        elseif isarithmetic(h[r])
-            push!(exprs, Arithmetic(h[r]))
+        elseif isarithmetic(chars[r])
+            push!(exprs, Arithmetic(chars[r]))
             r += 1
         else
-            @err_syntax "invalid identifier name '$(h[r])'"
+            @err_syntax "invalid identifier name '$(chars[r])'"
         end
     end
 
@@ -294,7 +291,7 @@ function tokenize(h::Vector{Char})::Vector{AbstractExpr}
     return exprs
 end
 
-#__ ExprTree
+#__ operator priority
 
 priority(::RPar)               = -1
 priority(::LPar)               = -1
@@ -320,30 +317,23 @@ priority(::Arithmetic{:^})     = 6
 priority(::Type{AbstractExpr}) = 7
 priority(::Type{Func})         = 8
 
-function Base.isless(l::L, r::R)::Bool where {L<:AbstractExpr,R<:AbstractExpr}
-    return isless(priority(l), priority(r))
-end
-
-function Base.:(==)(l::L, r::R)::Bool where {L<:AbstractExpr,R<:AbstractExpr}
-    return priority(l) == priority(r)
-end
-
 function Base.:(==)(l::L, r::R)::Bool where {L<:Variable,R<:Variable}
     return l[] == r[]
 end
 
+#__ expression tree
+
 mutable struct ExprTree
     const exprs::Vector{AbstractExpr}
-    const length::Int64
-    position::Int64
+    position::Int
 
-    ExprTree(exprs::Vector{AbstractExpr}) = new(exprs, length(exprs), 1)
+    ExprTree(exprs::Vector{AbstractExpr}) = new(exprs, 1)
 end
 
 """
     ExprNode
 
-Represents a transitional nested obejct obtained after parsing by [`parse_expr`](@ref) function.
+Represents a transitional nested object obtained after parsing by [`parse_expr`](@ref) function.
 Used by [`eval_expr`](@ref) function for evaluations an expression.
 
 ## Fields
@@ -355,7 +345,7 @@ struct ExprNode
     args::Vector{Union{AbstractExpr,ExprNode}}
 end
 
-function expr(::Type{AbstractExpr}, tree::ExprTree)
+function expr(::Type{AbstractExpr}, tree::ExprTree)::Union{AbstractExpr,ExprNode}
     next = tree.exprs[tree.position]
     if next isa Arithmetic{:+} || next isa Arithmetic{:-}
         tree.position += 1
@@ -375,7 +365,7 @@ function expr(::Type{AbstractExpr}, tree::ExprTree)
     return next
 end
 
-function expr(::Type{Func}, tree::ExprTree)
+function expr(::Type{Func}, tree::ExprTree)::ExprNode
     func::Func = tree.exprs[tree.position]
     tree.position += 2
     args = Union{AbstractExpr,ExprNode}[]
@@ -391,7 +381,7 @@ function expr(::Type{Func}, tree::ExprTree)
     return ExprNode(func, args)
 end
 
-function expr(tree::ExprTree, precedence::Int64 = 0)
+function expr(tree::ExprTree, precedence::Int = 0)::Union{AbstractExpr,ExprNode}
     priority(AbstractExpr) == precedence && return expr(AbstractExpr, tree)
     priority(Func)         == precedence && return expr(Func, tree)
 
@@ -413,6 +403,8 @@ function expr(tree::ExprTree, precedence::Int64 = 0)
 
     return left
 end
+
+#__ public API
 
 """
     parse_expr(str::AbstractString) -> ExprNode
