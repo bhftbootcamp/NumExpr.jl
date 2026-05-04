@@ -3,7 +3,10 @@ module NumExpr
 export parse_expr,
     eval_expr,
     isglobal_scope,
-    islocal_scope
+    islocal_scope,
+    VarContext,
+    compile_expr,
+    eval_compiled
 
 #__ exceptions
 
@@ -48,5 +51,9 @@ struct LocalScope <: AbstractScope end
 include("utils.jl")
 include("parser.jl")
 include("eval.jl")
+include("opcodes.jl")
+include("context.jl")
+include("compiler.jl")
+include("vm.jl")
 
 end
