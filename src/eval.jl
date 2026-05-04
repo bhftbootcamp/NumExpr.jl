@@ -62,17 +62,12 @@ call(::Func{:iszero}, x::Number) = Float64(x == 0)
 call(::Func{:isone}, x::Number)  = Float64(x == 1)
 call(::Func{:floor}, x::Number)  = floor(x)
 call(::Func{:ceil}, x::Number)   = ceil(x)
-call(::Func{:tg}, x::Number)    = tan(x)
-call(::Func{:ctg}, x::Number)   = cos(x) / sin(x)
-
 call(::Func{:max}, a::Number, b::Number)    = max(a, b)
 call(::Func{:min}, a::Number, b::Number)    = min(a, b)
 call(::Func{:ifelse}, c::Number, a::Number, b::Number) = c == 1 ? a : b
 call(::Func{:get}, a::Number, b::Number)    = isnan(a) ? b : a
 call(::Func{:round}, a::Number, b::Number)  = isnan(b) ? NaN : round(a; digits = Int(b))
 call(::Func{:isless}, a::Number, b::Number) = Float64(a === b ? false : isless(a, b))
-call(::Func{:div}, a::Number, b::Number)    = div(a, b)
-call(::Func{:mean}, x::Number...)           = sum(x) / length(x)
 
 #__ convert
 
