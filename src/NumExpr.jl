@@ -4,6 +4,7 @@ export parse_expr,
     eval_expr,
     isglobal_scope,
     islocal_scope,
+    var_has_tags,
     VarContext,
     compile_expr,
     eval_compiled

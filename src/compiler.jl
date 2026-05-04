@@ -70,6 +70,7 @@ function add_const!(e::Emitter, val::Float64)::Int
     if idx == 0
         push!(e.constants, val)
         idx = length(e.constants)
+        idx > typemax(UInt16) && error("constant pool exceeds UInt16 limit: $idx")
         e.const_index[val] = idx
     end
     return idx
@@ -127,12 +128,43 @@ function compile_node!(e::Emitter, node::ExprNode)::Nothing
         return nothing
     end
 
-    # Unary functions
+    # Functions (unary, binary, ternary)
     if head isa AbstractFuncOperator
-        n != 1 && error("compiled mode supports only unary functions, got $n arguments for $(head)")
-        compile_node!(e, args[1])
-        emit!(e, opcode(head))
-        return nothing
+        op = opcode(head)
+        if op == OP_MEAN
+            n < 1 && error("mean requires at least 1 argument, got $n")
+            n > 255 && error("mean supports at most 255 arguments, got $n")
+            for i in 1:n
+                compile_node!(e, args[i])
+            end
+            emit!(e, op)
+            push!(e.code, UInt8(n))
+            for _ in 2:n
+                pop_depth!(e)
+            end
+            return nothing
+        elseif op == OP_IFELSE
+            n != 3 && error("ifelse requires exactly 3 arguments, got $n")
+            compile_node!(e, args[1])
+            compile_node!(e, args[2])
+            compile_node!(e, args[3])
+            emit!(e, op)
+            pop_depth!(e)
+            pop_depth!(e)
+            return nothing
+        elseif op == OP_MAX2 || op == OP_MIN2 || op == OP_GET || op == OP_ROUND || op == OP_ISLESS || op == OP_DIV_INT
+            n != 2 && error("function $(head) requires exactly 2 arguments, got $n")
+            compile_node!(e, args[1])
+            compile_node!(e, args[2])
+            emit!(e, op)
+            pop_depth!(e)
+            return nothing
+        else
+            n != 1 && error("compiled mode supports only unary function $(head), got $n arguments")
+            compile_node!(e, args[1])
+            emit!(e, op)
+            return nothing
+        end
     end
 
     # Binary / n-ary operators (left-associative fold)

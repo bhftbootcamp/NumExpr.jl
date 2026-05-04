@@ -1,7 +1,7 @@
 # context
 
 """
-    VarContext()
+    VarContext(; sizehint::Int = 0)
 
 Shared variable registry that maps variable names to integer indices.
 All formulas compiled with the same `VarContext` share variable indices,
@@ -33,7 +33,11 @@ struct VarContext
     names::Vector{String}
     lookup::Dict{String,Int}
 
-    VarContext() = new(String[], Dict{String,Int}())
+    function VarContext(; sizehint::Int = 0)
+        names = sizehint > 0 ? sizehint!(String[], sizehint) : String[]
+        lookup = sizehint > 0 ? sizehint!(Dict{String,Int}(), sizehint) : Dict{String,Int}()
+        return new(names, lookup)
+    end
 end
 
 #__ accessors

@@ -234,6 +234,12 @@ end
         @test eval_expr(parse_expr("atan(2)")) == atan(2)
         @test eval_expr(parse_expr("exp(2)")) == exp(2)
         @test eval_expr(parse_expr("log(2)")) == log(2)
+        @test eval_expr(parse_expr("tg(0)")) == 0.0
+        @test eval_expr(parse_expr("tg(1)")) == tan(1)
+        @test eval_expr(parse_expr("ctg(1)")) ≈ cos(1) / sin(1)
+        @test eval_expr(parse_expr("mean(2, 4, 6)")) == 4.0
+        @test eval_expr(parse_expr("mean(10)")) == 10.0
+        @test eval_expr(parse_expr("mean(1, 2, 3, 4, 5)")) == 3.0
     end
 
     @testset verbose = true "Eval math const" begin
@@ -513,7 +519,8 @@ end
         parsed_local = parse_expr(local_var_str)
 
         @test parsed_local.val == "type='tool', size='M4'"
-        @test isempty(parsed_local.tags)
+        @test parsed_local.tags === nothing
+        @test !var_has_tags(parsed_local)
     end
 
     @testset "Parsing: Invalid Syntax Error" begin
@@ -1447,5 +1454,256 @@ end
             c = compile_expr("1e10 + 1e10", ctx)
             @test eval_compiled(c, values) == 2e10
         end
+
+        @testset "Extended unary opcodes" begin
+            ctx = VarContext()
+            values = Float64[]
+
+            # isnan
+            c = compile_expr("isnan(NaN)", ctx)
+            @test eval_compiled(c, values) == 1.0
+            c = compile_expr("isnan(42)", ctx)
+            @test eval_compiled(c, values) == 0.0
+
+            # not
+            c = compile_expr("not(true)", ctx)
+            @test eval_compiled(c, values) == 0.0
+            c = compile_expr("not(false)", ctx)
+            @test eval_compiled(c, values) == 1.0
+            c = compile_expr("not(NaN)", ctx)
+            @test isnan(eval_compiled(c, values))
+
+            # iszero
+            c = compile_expr("iszero(0)", ctx)
+            @test eval_compiled(c, values) == 1.0
+            c = compile_expr("iszero(5)", ctx)
+            @test eval_compiled(c, values) == 0.0
+
+            # isone
+            c = compile_expr("isone(1)", ctx)
+            @test eval_compiled(c, values) == 1.0
+            c = compile_expr("isone(0)", ctx)
+            @test eval_compiled(c, values) == 0.0
+
+            # floor
+            c = compile_expr("floor(3.7)", ctx)
+            @test eval_compiled(c, values) == 3.0
+            c = compile_expr("floor(-2.3)", ctx)
+            @test eval_compiled(c, values) == -3.0
+
+            # ceil
+            c = compile_expr("ceil(3.2)", ctx)
+            @test eval_compiled(c, values) == 4.0
+            c = compile_expr("ceil(-2.8)", ctx)
+            @test eval_compiled(c, values) == -2.0
+        end
+
+        @testset "Extended binary/ternary opcodes" begin
+            ctx = VarContext()
+            values = Float64[]
+
+            # max (binary)
+            c = compile_expr("max(3, 7)", ctx)
+            @test eval_compiled(c, values) == 7.0
+            c = compile_expr("max(10, 2)", ctx)
+            @test eval_compiled(c, values) == 10.0
+
+            # min (binary)
+            c = compile_expr("min(3, 7)", ctx)
+            @test eval_compiled(c, values) == 3.0
+            c = compile_expr("min(10, 2)", ctx)
+            @test eval_compiled(c, values) == 2.0
+
+            # ifelse (ternary)
+            c = compile_expr("ifelse(true, 10, 20)", ctx)
+            @test eval_compiled(c, values) == 10.0
+            c = compile_expr("ifelse(false, 10, 20)", ctx)
+            @test eval_compiled(c, values) == 20.0
+
+            # get (binary: isnan(a) ? b : a)
+            c = compile_expr("get(NaN, 42)", ctx)
+            @test eval_compiled(c, values) == 42.0
+            c = compile_expr("get(7, 42)", ctx)
+            @test eval_compiled(c, values) == 7.0
+
+            # round (binary)
+            c = compile_expr("round(3.456, 2)", ctx)
+            @test eval_compiled(c, values) ≈ 3.46
+            c = compile_expr("round(3.456, 0)", ctx)
+            @test eval_compiled(c, values) == 3.0
+
+            # isless (binary)
+            c = compile_expr("isless(2, 3)", ctx)
+            @test eval_compiled(c, values) == 1.0
+            c = compile_expr("isless(3, 2)", ctx)
+            @test eval_compiled(c, values) == 0.0
+            c = compile_expr("isless(NaN, 1)", ctx)
+            @test eval_compiled(c, values) == 0.0
+
+            # div (binary: integer division)
+            c = compile_expr("div(17, 5)", ctx)
+            @test eval_compiled(c, values) == 3.0
+            c = compile_expr("div(10, 3)", ctx)
+            @test eval_compiled(c, values) == 3.0
+        end
+
+        @testset "Extended opcodes with variables" begin
+            ctx = VarContext()
+            c = compile_expr("ifelse(a > 0, a * 2, get(a, b))", ctx)
+            @test length(ctx) == 2
+
+            # a=5, b=10 → a>0 → a*2 = 10
+            vals = [5.0, 10.0]
+            @test eval_compiled(c, vals) == 10.0
+
+            # a=NaN, b=10 → a>0 is false → get(NaN,10) = 10
+            vals = [NaN, 10.0]
+            @test eval_compiled(c, vals) == 10.0
+
+            # max/min with vars
+            c2 = compile_expr("max(a, b) - min(a, b)", ctx)
+            vals = [3.0, 7.0]
+            @test eval_compiled(c2, vals) == 4.0
+        end
+
+        @testset "Extended opcodes correctness vs tree eval" begin
+            test_cases = [
+                "isnan(NaN)",
+                "isnan(1)",
+                "not(true)",
+                "not(false)",
+                "iszero(0)",
+                "iszero(1)",
+                "isone(1)",
+                "isone(0)",
+                "floor(3.7)",
+                "ceil(3.2)",
+                "max(5, 10)",
+                "min(5, 10)",
+                "ifelse(true, 1, 2)",
+                "ifelse(false, 1, 2)",
+                "get(NaN, 42)",
+                "get(7, 42)",
+                "round(3.456, 2)",
+                "div(17, 5)",
+                "tg(0)",
+                "tg(1)",
+                "ctg(1)",
+                "mean(2, 4, 6)",
+                "mean(10)",
+                "mean(1, 2, 3, 4, 5)",
+            ]
+            for expr_str in test_cases
+                tree_result = eval_expr(parse_expr(expr_str))
+                ctx = VarContext()
+                compiled = compile_expr(expr_str, ctx)
+                vm_result = eval_compiled(compiled, Float64[])
+                if isnan(tree_result)
+                    @test isnan(vm_result)
+                else
+                    @test vm_result ≈ Float64(tree_result) atol=1e-10
+                end
+            end
+        end
+
+        @testset "tg / ctg opcodes" begin
+            ctx = VarContext()
+            c = compile_expr("tg(x)", ctx)
+            @test eval_compiled(c, [0.0]) == 0.0
+            @test eval_compiled(c, [1.0]) ≈ tan(1.0)
+            @test eval_compiled(c, [Float64(π)/4]) ≈ 1.0
+
+            c2 = compile_expr("ctg(x)", ctx)
+            @test eval_compiled(c2, [Float64(π)/4]) ≈ 1.0
+            @test eval_compiled(c2, [1.0]) ≈ cos(1.0) / sin(1.0)
+            @test eval_compiled(c2, [Float64(π)/2]) ≈ 0.0 atol=1e-15
+
+            # Combined expression
+            c3 = compile_expr("tg(x) * ctg(x)", ctx)
+            @test eval_compiled(c3, [1.0]) ≈ 1.0
+            @test eval_compiled(c3, [0.5]) ≈ 1.0
+        end
+
+        @testset "mean opcode" begin
+            ctx = VarContext()
+
+            # Constants only
+            c = compile_expr("mean(2, 4, 6)", ctx)
+            @test eval_compiled(c, Float64[]) == 4.0
+
+            c2 = compile_expr("mean(10)", ctx)
+            @test eval_compiled(c2, Float64[]) == 10.0
+
+            c3 = compile_expr("mean(1, 2, 3, 4, 5)", ctx)
+            @test eval_compiled(c3, Float64[]) == 3.0
+
+            # With variables
+            c4 = compile_expr("mean(a, b, c)", ctx)
+            @test eval_compiled(c4, [2.0, 4.0, 6.0]) == 4.0
+            @test eval_compiled(c4, [10.0, 20.0, 30.0]) == 20.0
+
+            # Two args
+            c5 = compile_expr("mean(a, b)", ctx)
+            @test eval_compiled(c5, [3.0, 7.0, 0.0]) == 5.0
+
+            # In larger expression
+            c6 = compile_expr("mean(a, b, c) + 1", ctx)
+            @test eval_compiled(c6, [2.0, 4.0, 6.0]) == 5.0
+        end
+
+        @testset "Callable resolver (functor)" begin
+            ctx = VarContext()
+            c = compile_expr("a + b * 2", ctx)
+
+            # Functor (callable struct)
+            struct TestResolver
+                data::Vector{Float64}
+            end
+            (r::TestResolver)(idx::Int) = r.data[idx]
+
+            resolver = TestResolver([3.0, 4.0])
+            @test eval_compiled(c, resolver) == 11.0
+
+            # Regular function still works
+            @test eval_compiled(c, idx -> [3.0, 4.0][idx]) == 11.0
+        end
+
+        @testset "VarContext sizehint" begin
+            ctx = VarContext(; sizehint = 10)
+            @test length(ctx) == 0
+
+            c = compile_expr("a + b", ctx)
+            @test length(ctx) == 2
+            @test ctx["a"] == 1
+            @test ctx["b"] == 2
+            @test eval_compiled(c, [1.0, 2.0]) == 3.0
+        end
+
+        @testset "Constant pool overflow check" begin
+            ctx = VarContext()
+            # Build an expression with more than 65535 distinct constants
+            parts = [string(Float64(i)) for i in 1:65537]
+            huge_expr = join(parts, " + ")
+            @test_throws ErrorException compile_expr(huge_expr, ctx)
+        end
+    end
+
+    @testset verbose = true "Variable tags" begin
+        # Tag-less variable (format1) has nothing tags
+        v = parse_expr("abc")
+        @test v.tags === nothing
+        @test !var_has_tags(v)
+        @test NumExpr.var_tags(v) == Dict{String,String}()
+
+        # Tagged variable (format2) has real tags
+        v2 = parse_expr("abc{key='val'}")
+        @test v2.tags !== nothing
+        @test var_has_tags(v2)
+        @test NumExpr.var_tags(v2) == Dict("key" => "val")
+
+        # Global tag-less
+        v3 = parse_expr("[myvar]")
+        @test v3.tags === nothing
+        @test !var_has_tags(v3)
     end
 end

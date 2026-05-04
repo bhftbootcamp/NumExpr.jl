@@ -42,6 +42,28 @@ const OP_ATAN = 0x44
 const OP_EXP  = 0x45
 const OP_LOG  = 0x46
 
+#__ unary predicates
+
+const OP_ISNAN  = 0x47
+const OP_NOT    = 0x48
+const OP_ISZERO = 0x49
+const OP_ISONE  = 0x4A
+const OP_FLOOR  = 0x4B
+const OP_CEIL   = 0x4C
+const OP_TG     = 0x4D
+const OP_CTG    = 0x4E
+
+#__ binary / ternary functions
+
+const OP_MAX2   = 0x50
+const OP_MIN2   = 0x51
+const OP_IFELSE = 0x52
+const OP_GET    = 0x53
+const OP_ROUND  = 0x54
+const OP_ISLESS = 0x55
+const OP_DIV_INT = 0x56
+const OP_MEAN    = 0x57
+
 #__ opcode dispatch
 
 opcode(::Arithmetic{:+})::UInt8  = OP_ADD
@@ -61,10 +83,28 @@ opcode(::Logic{:!=})::UInt8  = OP_NE
 opcode(::Logic{:&&})::UInt8  = OP_AND
 opcode(::Logic{:||})::UInt8  = OP_OR
 
-opcode(::Func{:sqrt})::UInt8 = OP_SQRT
-opcode(::Func{:abs})::UInt8  = OP_ABS
-opcode(::Func{:sin})::UInt8  = OP_SIN
-opcode(::Func{:cos})::UInt8  = OP_COS
-opcode(::Func{:atan})::UInt8 = OP_ATAN
-opcode(::Func{:exp})::UInt8  = OP_EXP
-opcode(::Func{:log})::UInt8  = OP_LOG
+opcode(::Func{:sqrt})::UInt8  = OP_SQRT
+opcode(::Func{:abs})::UInt8   = OP_ABS
+opcode(::Func{:sin})::UInt8   = OP_SIN
+opcode(::Func{:cos})::UInt8   = OP_COS
+opcode(::Func{:atan})::UInt8  = OP_ATAN
+opcode(::Func{:exp})::UInt8   = OP_EXP
+opcode(::Func{:log})::UInt8   = OP_LOG
+
+opcode(::Func{:isnan})::UInt8  = OP_ISNAN
+opcode(::Func{:not})::UInt8    = OP_NOT
+opcode(::Func{:iszero})::UInt8 = OP_ISZERO
+opcode(::Func{:isone})::UInt8  = OP_ISONE
+opcode(::Func{:floor})::UInt8  = OP_FLOOR
+opcode(::Func{:ceil})::UInt8   = OP_CEIL
+opcode(::Func{:tg})::UInt8    = OP_TG
+opcode(::Func{:ctg})::UInt8   = OP_CTG
+
+opcode(::Func{:max})::UInt8    = OP_MAX2
+opcode(::Func{:min})::UInt8    = OP_MIN2
+opcode(::Func{:ifelse})::UInt8 = OP_IFELSE
+opcode(::Func{:get})::UInt8    = OP_GET
+opcode(::Func{:round})::UInt8  = OP_ROUND
+opcode(::Func{:isless})::UInt8 = OP_ISLESS
+opcode(::Func{:div})::UInt8    = OP_DIV_INT
+opcode(::Func{:mean})::UInt8  = OP_MEAN

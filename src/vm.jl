@@ -131,6 +131,73 @@ function vm_eval(
         elseif op == OP_LOG
             stack[sp] = log(stack[sp])
             pc += 1
+        elseif op == OP_ISNAN
+            stack[sp] = Float64(isnan(stack[sp]))
+            pc += 1
+        elseif op == OP_NOT
+            x = stack[sp]
+            stack[sp] = x == 1.0 ? 0.0 : (x == 0.0 ? 1.0 : NaN)
+            pc += 1
+        elseif op == OP_ISZERO
+            stack[sp] = Float64(stack[sp] == 0.0)
+            pc += 1
+        elseif op == OP_ISONE
+            stack[sp] = Float64(stack[sp] == 1.0)
+            pc += 1
+        elseif op == OP_FLOOR
+            stack[sp] = floor(stack[sp])
+            pc += 1
+        elseif op == OP_CEIL
+            stack[sp] = ceil(stack[sp])
+            pc += 1
+        elseif op == OP_TG
+            stack[sp] = tan(stack[sp])
+            pc += 1
+        elseif op == OP_CTG
+            stack[sp] = cos(stack[sp]) / sin(stack[sp])
+            pc += 1
+        elseif op == OP_MAX2
+            stack[sp - 1] = max(stack[sp - 1], stack[sp])
+            sp -= 1
+            pc += 1
+        elseif op == OP_MIN2
+            stack[sp - 1] = min(stack[sp - 1], stack[sp])
+            sp -= 1
+            pc += 1
+        elseif op == OP_IFELSE
+            c = stack[sp - 2]; v_then = stack[sp - 1]; v_else = stack[sp]
+            stack[sp - 2] = c == 1.0 ? v_then : v_else
+            sp -= 2
+            pc += 1
+        elseif op == OP_GET
+            a = stack[sp - 1]; b = stack[sp]
+            stack[sp - 1] = isnan(a) ? b : a
+            sp -= 1
+            pc += 1
+        elseif op == OP_ROUND
+            a = stack[sp - 1]; b = stack[sp]
+            stack[sp - 1] = isnan(b) ? NaN : round(a; digits = Int(b))
+            sp -= 1
+            pc += 1
+        elseif op == OP_ISLESS
+            a = stack[sp - 1]; b = stack[sp]
+            stack[sp - 1] = Float64(a === b ? false : isless(a, b))
+            sp -= 1
+            pc += 1
+        elseif op == OP_DIV_INT
+            stack[sp - 1] = div(stack[sp - 1], stack[sp])
+            sp -= 1
+            pc += 1
+        elseif op == OP_MEAN
+            count = Int(code[pc + 1])
+            s = 0.0
+            base = sp - count + 1
+            for i in base:sp
+                s += stack[i]
+            end
+            stack[base] = s / count
+            sp = base
+            pc += 2
         else
             error("unknown opcode: 0x$(string(op, base=16, pad=2))")
         end
@@ -195,12 +262,13 @@ function eval_compiled(expr::CompiledExpr, values::AbstractVector{Float64})::Flo
 end
 
 """
-    eval_compiled(expr::CompiledExpr, resolver::Function) -> Float64
+    eval_compiled(expr::CompiledExpr, resolver) -> Float64
 
-Evaluate a compiled expression using a resolver function for variable lookup.
+Evaluate a compiled expression using a resolver callable for variable lookup.
 The resolver is called as `resolver(index::Int) -> Float64` for each variable reference.
+Any callable (function, functor, closure) is accepted.
 """
-function eval_compiled(expr::CompiledExpr, resolver::Function)::Float64
+function eval_compiled(expr::CompiledExpr, resolver)::Float64
     stack = Vector{Float64}(undef, expr.max_stack)
     return vm_eval(expr.code, expr.constants, ResolverAdapter(resolver), stack)
 end
