@@ -10,9 +10,20 @@ end
 
 #__ bytecode decoding
 
-@inline function read_u16(code::Vector{UInt8}, pos::Int)::Int
-    return Int(code[pos]) | (Int(code[pos + 1]) << 8)
+@inline function _read_u16(code_ptr::Ptr{UInt8}, pos::Int)::Int
+    lo = unsafe_load(code_ptr, pos)
+    hi = unsafe_load(code_ptr, pos + 1)
+    return Int(lo) | (Int(hi) << 8)
 end
+
+
+@inline _vars_pointer(vars::Vector{Float64}) = pointer(vars)
+@inline _vars_pointer(_)                     = nothing
+
+@inline _read_var(::Vector{Float64}, vars_ptr::Ptr{Float64}, idx::Int) =
+    unsafe_load(vars_ptr, idx)
+@inline _read_var(vars, ::Nothing, idx::Int) =
+    @inbounds vars[idx]
 
 #__ core VM loop
 
@@ -22,188 +33,251 @@ function vm_eval(
     vars::V,
     stack::Vector{Float64},
 )::Float64 where {V}
-    sp = 0
-    pc = 1
     n = length(code)
+    GC.@preserve code consts stack vars begin
+        code_ptr   = pointer(code)
+        consts_ptr = pointer(consts)
+        stack_ptr  = pointer(stack)
+        vars_ptr   = _vars_pointer(vars)
 
-    @inbounds while pc <= n
-        op = code[pc]
+        sp = 0
+        pc = 1
+        while pc <= n
+            op = unsafe_load(code_ptr, pc)
 
-        if op == OP_LOAD_CONST
-            idx = read_u16(code, pc + 1)
-            sp += 1
-            stack[sp] = consts[idx]
-            pc += 3
-        elseif op == OP_LOAD_VAR
-            idx = read_u16(code, pc + 1)
-            sp += 1
-            stack[sp] = vars[idx]
-            pc += 3
-        elseif op == OP_LOAD_TRUE
-            sp += 1
-            stack[sp] = 1.0
-            pc += 1
-        elseif op == OP_LOAD_FALSE
-            sp += 1
-            stack[sp] = 0.0
-            pc += 1
-        elseif op == OP_LOAD_NAN
-            sp += 1
-            stack[sp] = NaN
-            pc += 1
-        elseif op == OP_ADD
-            stack[sp - 1] += stack[sp]
-            sp -= 1
-            pc += 1
-        elseif op == OP_SUB
-            stack[sp - 1] -= stack[sp]
-            sp -= 1
-            pc += 1
-        elseif op == OP_MUL
-            stack[sp - 1] *= stack[sp]
-            sp -= 1
-            pc += 1
-        elseif op == OP_DIV
-            stack[sp - 1] /= stack[sp]
-            sp -= 1
-            pc += 1
-        elseif op == OP_POW
-            stack[sp - 1] = stack[sp - 1] ^ stack[sp]
-            sp -= 1
-            pc += 1
-        elseif op == OP_MOD
-            stack[sp - 1] = stack[sp - 1] % stack[sp]
-            sp -= 1
-            pc += 1
-        elseif op == OP_NEG
-            stack[sp] = -stack[sp]
-            pc += 1
-        elseif op == OP_GT
-            stack[sp - 1] = Float64(stack[sp - 1] > stack[sp])
-            sp -= 1
-            pc += 1
-        elseif op == OP_LT
-            stack[sp - 1] = Float64(stack[sp - 1] < stack[sp])
-            sp -= 1
-            pc += 1
-        elseif op == OP_GE
-            stack[sp - 1] = Float64(stack[sp - 1] >= stack[sp])
-            sp -= 1
-            pc += 1
-        elseif op == OP_LE
-            stack[sp - 1] = Float64(stack[sp - 1] <= stack[sp])
-            sp -= 1
-            pc += 1
-        elseif op == OP_EQ
-            stack[sp - 1] = Float64(stack[sp - 1] == stack[sp])
-            sp -= 1
-            pc += 1
-        elseif op == OP_NE
-            stack[sp - 1] = Float64(stack[sp - 1] != stack[sp])
-            sp -= 1
-            pc += 1
-        elseif op == OP_AND
-            stack[sp - 1] = Float64((stack[sp - 1] != 0.0) & (stack[sp] != 0.0))
-            sp -= 1
-            pc += 1
-        elseif op == OP_OR
-            stack[sp - 1] = Float64((stack[sp - 1] != 0.0) | (stack[sp] != 0.0))
-            sp -= 1
-            pc += 1
-        elseif op == OP_SQRT
-            stack[sp] = sqrt(stack[sp])
-            pc += 1
-        elseif op == OP_ABS
-            stack[sp] = abs(stack[sp])
-            pc += 1
-        elseif op == OP_SIN
-            stack[sp] = sin(stack[sp])
-            pc += 1
-        elseif op == OP_COS
-            stack[sp] = cos(stack[sp])
-            pc += 1
-        elseif op == OP_ATAN
-            stack[sp] = atan(stack[sp])
-            pc += 1
-        elseif op == OP_EXP
-            stack[sp] = exp(stack[sp])
-            pc += 1
-        elseif op == OP_LOG
-            stack[sp] = log(stack[sp])
-            pc += 1
-        elseif op == OP_ISNAN
-            stack[sp] = Float64(isnan(stack[sp]))
-            pc += 1
-        elseif op == OP_NOT
-            x = stack[sp]
-            stack[sp] = x == 1.0 ? 0.0 : (x == 0.0 ? 1.0 : NaN)
-            pc += 1
-        elseif op == OP_ISZERO
-            stack[sp] = Float64(stack[sp] == 0.0)
-            pc += 1
-        elseif op == OP_ISONE
-            stack[sp] = Float64(stack[sp] == 1.0)
-            pc += 1
-        elseif op == OP_FLOOR
-            stack[sp] = floor(stack[sp])
-            pc += 1
-        elseif op == OP_CEIL
-            stack[sp] = ceil(stack[sp])
-            pc += 1
-        elseif op == OP_TG
-            stack[sp] = tan(stack[sp])
-            pc += 1
-        elseif op == OP_CTG
-            stack[sp] = cos(stack[sp]) / sin(stack[sp])
-            pc += 1
-        elseif op == OP_MAX2
-            stack[sp - 1] = max(stack[sp - 1], stack[sp])
-            sp -= 1
-            pc += 1
-        elseif op == OP_MIN2
-            stack[sp - 1] = min(stack[sp - 1], stack[sp])
-            sp -= 1
-            pc += 1
-        elseif op == OP_IFELSE
-            c = stack[sp - 2]; v_then = stack[sp - 1]; v_else = stack[sp]
-            stack[sp - 2] = c == 1.0 ? v_then : v_else
-            sp -= 2
-            pc += 1
-        elseif op == OP_GET
-            a = stack[sp - 1]; b = stack[sp]
-            stack[sp - 1] = isnan(a) ? b : a
-            sp -= 1
-            pc += 1
-        elseif op == OP_ROUND
-            a = stack[sp - 1]; b = stack[sp]
-            stack[sp - 1] = isnan(b) ? NaN : round(a; digits = Int(b))
-            sp -= 1
-            pc += 1
-        elseif op == OP_ISLESS
-            a = stack[sp - 1]; b = stack[sp]
-            stack[sp - 1] = Float64(a === b ? false : isless(a, b))
-            sp -= 1
-            pc += 1
-        elseif op == OP_DIV_INT
-            stack[sp - 1] = div(stack[sp - 1], stack[sp])
-            sp -= 1
-            pc += 1
-        elseif op == OP_MEAN
-            count = Int(code[pc + 1])
-            s = 0.0
-            base = sp - count + 1
-            for i in base:sp
-                s += stack[i]
+            if op == OP_LOAD_CONST
+                idx = _read_u16(code_ptr, pc + 1)
+                sp += 1
+                unsafe_store!(stack_ptr, unsafe_load(consts_ptr, idx), sp)
+                pc += 3
+            elseif op == OP_LOAD_VAR
+                idx = _read_u16(code_ptr, pc + 1)
+                sp += 1
+                unsafe_store!(stack_ptr, _read_var(vars, vars_ptr, idx), sp)
+                pc += 3
+            elseif op == OP_LOAD_TRUE
+                sp += 1
+                unsafe_store!(stack_ptr, 1.0, sp)
+                pc += 1
+            elseif op == OP_LOAD_FALSE
+                sp += 1
+                unsafe_store!(stack_ptr, 0.0, sp)
+                pc += 1
+            elseif op == OP_LOAD_NAN
+                sp += 1
+                unsafe_store!(stack_ptr, NaN, sp)
+                pc += 1
+            elseif op == OP_LOAD_ZERO
+                sp += 1
+                unsafe_store!(stack_ptr, 0.0, sp)
+                pc += 1
+            elseif op == OP_LOAD_ONE
+                sp += 1
+                unsafe_store!(stack_ptr, 1.0, sp)
+                pc += 1
+            elseif op == OP_ADD
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, a + b, sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_SUB
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, a - b, sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_MUL
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, a * b, sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_DIV
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, a / b, sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_POW
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, a ^ b, sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_MOD
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, a % b, sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_REM
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, rem(a, b), sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_NEG
+                unsafe_store!(stack_ptr, -unsafe_load(stack_ptr, sp), sp)
+                pc += 1
+            elseif op == OP_GT
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, Float64(a > b), sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_LT
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, Float64(a < b), sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_GE
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, Float64(a >= b), sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_LE
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, Float64(a <= b), sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_EQ
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, Float64(a == b), sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_NE
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, Float64(a != b), sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_AND
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, Float64((a != 0.0) & (b != 0.0)), sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_OR
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, Float64((a != 0.0) | (b != 0.0)), sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_SQRT
+                unsafe_store!(stack_ptr, sqrt(unsafe_load(stack_ptr, sp)), sp)
+                pc += 1
+            elseif op == OP_ABS
+                unsafe_store!(stack_ptr, abs(unsafe_load(stack_ptr, sp)), sp)
+                pc += 1
+            elseif op == OP_SIN
+                unsafe_store!(stack_ptr, sin(unsafe_load(stack_ptr, sp)), sp)
+                pc += 1
+            elseif op == OP_COS
+                unsafe_store!(stack_ptr, cos(unsafe_load(stack_ptr, sp)), sp)
+                pc += 1
+            elseif op == OP_ATAN
+                unsafe_store!(stack_ptr, atan(unsafe_load(stack_ptr, sp)), sp)
+                pc += 1
+            elseif op == OP_EXP
+                unsafe_store!(stack_ptr, exp(unsafe_load(stack_ptr, sp)), sp)
+                pc += 1
+            elseif op == OP_LOG
+                unsafe_store!(stack_ptr, log(unsafe_load(stack_ptr, sp)), sp)
+                pc += 1
+            elseif op == OP_ISNAN
+                unsafe_store!(stack_ptr, Float64(isnan(unsafe_load(stack_ptr, sp))), sp)
+                pc += 1
+            elseif op == OP_NOT
+                x = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, isnan(x) ? NaN : (x == 0.0 ? 1.0 : 0.0), sp)
+                pc += 1
+            elseif op == OP_ISZERO
+                unsafe_store!(stack_ptr, Float64(unsafe_load(stack_ptr, sp) == 0.0), sp)
+                pc += 1
+            elseif op == OP_ISONE
+                unsafe_store!(stack_ptr, Float64(unsafe_load(stack_ptr, sp) == 1.0), sp)
+                pc += 1
+            elseif op == OP_FLOOR
+                unsafe_store!(stack_ptr, floor(unsafe_load(stack_ptr, sp)), sp)
+                pc += 1
+            elseif op == OP_CEIL
+                unsafe_store!(stack_ptr, ceil(unsafe_load(stack_ptr, sp)), sp)
+                pc += 1
+            elseif op == OP_TG
+                unsafe_store!(stack_ptr, tan(unsafe_load(stack_ptr, sp)), sp)
+                pc += 1
+            elseif op == OP_CTG
+                unsafe_store!(stack_ptr, cot(unsafe_load(stack_ptr, sp)), sp)
+                pc += 1
+            elseif op == OP_MAX2
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, max(a, b), sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_MIN2
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, min(a, b), sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_IFELSE
+                c      = unsafe_load(stack_ptr, sp - 2)
+                v_then = unsafe_load(stack_ptr, sp - 1)
+                v_else = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr,
+                    isnan(c) ? NaN : (c != 0.0 ? v_then : v_else),
+                    sp - 2)
+                sp -= 2
+                pc += 1
+            elseif op == OP_GET
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, isnan(a) ? b : a, sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_ROUND
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr,
+                    isnan(b) ? NaN : round(a; digits = Int(b)),
+                    sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_ISLESS
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, Float64(isless(a, b)), sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_DIV_INT
+                a = unsafe_load(stack_ptr, sp - 1)
+                b = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, div(a, b), sp - 1)
+                sp -= 1
+                pc += 1
+            elseif op == OP_MEAN
+                count = Int(unsafe_load(code_ptr, pc + 1))
+                s = 0.0
+                base = sp - count + 1
+                for i in base:sp
+                    s += unsafe_load(stack_ptr, i)
+                end
+                unsafe_store!(stack_ptr, s / count, base)
+                sp = base
+                pc += 2
+            else
+                error("unknown opcode: 0x$(string(op, base=16, pad=2))")
             end
-            stack[base] = s / count
-            sp = base
-            pc += 2
-        else
-            error("unknown opcode: 0x$(string(op, base=16, pad=2))")
         end
-    end
 
-    return stack[1]
+        return unsafe_load(stack_ptr, 1)
+    end
 end
 
 #__ public API

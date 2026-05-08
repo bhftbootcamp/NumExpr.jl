@@ -1681,10 +1681,107 @@ end
 
         @testset "Constant pool overflow check" begin
             ctx = VarContext()
-            # Build an expression with more than 65535 distinct constants
-            parts = [string(Float64(i)) for i in 1:65537]
+            # Build an expression with more than 65535 distinct constants.
+            # 0.0 and 1.0 are emitted as immediate opcodes and don't consume the pool,
+            # so start at 2 to make sure the pool actually overflows.
+            parts = [string(Float64(i)) for i in 2:65538]
             huge_expr = join(parts, " + ")
             @test_throws ErrorException compile_expr(huge_expr, ctx)
+        end
+
+        @testset "rem opcode" begin
+            ctx = VarContext()
+            @test eval_compiled(compile_expr("rem(7, 3)", ctx), Float64[]) == rem(7.0, 3.0)
+            @test eval_compiled(compile_expr("rem(-7, 3)", ctx), Float64[]) == rem(-7.0, 3.0)
+            @test eval_compiled(compile_expr("rem(7.5, 2.0)", ctx), Float64[]) == rem(7.5, 2.0)
+
+            # tree and VM agree
+            for s in ("rem(10, 3)", "rem(-10, 3)", "rem(10, -3)", "rem(7.5, 2.0)")
+                @test eval_expr(parse_expr(s)) == eval_compiled(compile_expr(s, VarContext()), Float64[])
+            end
+        end
+
+        @testset "Load-immediate opcodes for 0 and 1" begin
+            ctx = VarContext()
+
+            c0 = compile_expr("0", ctx)
+            @test c0.code[1] == NumExpr.OP_LOAD_ZERO
+            @test isempty(c0.constants)
+            @test eval_compiled(c0, Float64[]) == 0.0
+
+            c1 = compile_expr("1", ctx)
+            @test c1.code[1] == NumExpr.OP_LOAD_ONE
+            @test isempty(c1.constants)
+            @test eval_compiled(c1, Float64[]) == 1.0
+
+            # 0.0 and 1.0 stay out of the constant pool when used in larger exprs
+            c2 = compile_expr("a + 1 + 0", ctx)
+            @test isempty(c2.constants)
+
+            # Other literals still go through the constant pool
+            c3 = compile_expr("2", VarContext())
+            @test c3.code[1] == NumExpr.OP_LOAD_CONST
+            @test c3.constants == [2.0]
+
+            # -0.0 is NOT folded: parser produces unary-minus over 0.0,
+            # so we get OP_LOAD_ZERO + OP_NEG → -0.0
+            c4 = compile_expr("-0", VarContext())
+            @test eval_compiled(c4, Float64[]) === -0.0
+        end
+
+        @testset "Unsupported function clean error" begin
+            ctx = VarContext()
+            err1 = try; compile_expr("foo(1)", ctx); nothing; catch e; e; end
+            @test err1 isa ErrorException
+            @test occursin("compiled mode does not support", err1.msg)
+            @test occursin("foo", err1.msg)
+
+            @test_throws ErrorException compile_expr("mod(7, 3)", VarContext())
+            @test_throws ErrorException compile_expr("xor(1, 0)", VarContext())
+        end
+
+        @testset "Function arity errors" begin
+            ctx = VarContext()
+            @test_throws ErrorException compile_expr("max(1, 2, 3)", ctx)
+            @test_throws ErrorException compile_expr("min(1, 2, 3)", ctx)
+            @test_throws ErrorException compile_expr("ifelse(1)", ctx)
+            @test_throws ErrorException compile_expr("ifelse(1, 2)", ctx)
+            @test_throws ErrorException compile_expr("ifelse(1, 2, 3, 4)", ctx)
+            @test_throws ErrorException compile_expr("get(1)", ctx)
+            @test_throws ErrorException compile_expr("rem(1, 2, 3)", ctx)
+            @test_throws ErrorException compile_expr("sqrt(1, 2)", ctx)
+            @test_throws ErrorException compile_expr("mean()", ctx)
+        end
+
+        @testset "ifelse / not truthy semantics" begin
+            ctx = VarContext()
+
+            # Any non-zero, non-NaN condition is "true" for ifelse
+            @test eval_compiled(compile_expr("ifelse(2, 10, 20)", ctx), Float64[]) == 10.0
+            @test eval_compiled(compile_expr("ifelse(-1, 10, 20)", ctx), Float64[]) == 10.0
+            @test eval_compiled(compile_expr("ifelse(0.5, 10, 20)", ctx), Float64[]) == 10.0
+            @test eval_compiled(compile_expr("ifelse(0, 10, 20)", ctx), Float64[]) == 20.0
+            @test isnan(eval_compiled(compile_expr("ifelse(NaN, 10, 20)", ctx), Float64[]))
+
+            # not: any non-zero non-NaN → 0; zero → 1; NaN → NaN
+            @test eval_compiled(compile_expr("not(0)", ctx), Float64[]) == 1.0
+            @test eval_compiled(compile_expr("not(5)", ctx), Float64[]) == 0.0
+            @test eval_compiled(compile_expr("not(-2)", ctx), Float64[]) == 0.0
+            @test isnan(eval_compiled(compile_expr("not(NaN)", ctx), Float64[]))
+
+            # Tree-walk and VM agree on the new semantics
+            for s in (
+                "ifelse(2, 10, 20)", "ifelse(-3, 10, 20)", "ifelse(0, 10, 20)",
+                "not(0)", "not(7)", "not(-1)",
+            )
+                tree = eval_expr(parse_expr(s))
+                vm   = eval_compiled(compile_expr(s, VarContext()), Float64[])
+                @test tree == vm
+            end
+            for s in ("ifelse(NaN, 10, 20)", "not(NaN)")
+                @test isnan(eval_expr(parse_expr(s)))
+                @test isnan(eval_compiled(compile_expr(s, VarContext()), Float64[]))
+            end
         end
     end
 

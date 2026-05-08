@@ -48,7 +48,7 @@ call(::Func{:abs}, x::Number)  = abs(x)
 call(::Func{:sin}, x::Number)  = sin(x)
 call(::Func{:cos}, x::Number)  = cos(x)
 call(::Func{:tg}, x::Number)   = tan(x)
-call(::Func{:ctg}, x::Number)  = cos(x) / sin(x)
+call(::Func{:ctg}, x::Number)  = cot(x)
 call(::Func{:atan}, x::Number) = atan(x)
 call(::Func{:exp}, x::Number)  = exp(x)
 call(::Func{:log}, x::Number)  = log(x)
@@ -57,17 +57,17 @@ call(::Func{:rem}, x::Number, y::Number) = rem(x, y)
 call(::Func{:mean}, x::Number...) = sum(x) / length(x)
 
 call(::Func{:isnan}, x::Number)  = Float64(isnan(x))
-call(::Func{:not}, x::Number)    = x == 1 ? 0.0 : (x == 0 ? 1.0 : NaN)
+call(::Func{:not}, x::Number)    = isnan(x) ? NaN : Float64(x == 0)
 call(::Func{:iszero}, x::Number) = Float64(x == 0)
 call(::Func{:isone}, x::Number)  = Float64(x == 1)
 call(::Func{:floor}, x::Number)  = floor(x)
 call(::Func{:ceil}, x::Number)   = ceil(x)
 call(::Func{:max}, a::Number, b::Number)    = max(a, b)
 call(::Func{:min}, a::Number, b::Number)    = min(a, b)
-call(::Func{:ifelse}, c::Number, a::Number, b::Number) = c == 1 ? a : b
+call(::Func{:ifelse}, c::Number, a::Number, b::Number) = isnan(c) ? NaN : (c != 0 ? a : b)
 call(::Func{:get}, a::Number, b::Number)    = isnan(a) ? b : a
 call(::Func{:round}, a::Number, b::Number)  = isnan(b) ? NaN : round(a; digits = Int(b))
-call(::Func{:isless}, a::Number, b::Number) = Float64(a === b ? false : isless(a, b))
+call(::Func{:isless}, a::Number, b::Number) = Float64(isless(a, b))
 
 #__ convert
 

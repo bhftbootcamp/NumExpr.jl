@@ -82,6 +82,10 @@ function compile_node!(e::Emitter, val::NumVal{Float64})::Nothing
     x = val[]
     if isnan(x)
         emit!(e, OP_LOAD_NAN)
+    elseif x === 0.0
+        emit!(e, OP_LOAD_ZERO)
+    elseif x === 1.0
+        emit!(e, OP_LOAD_ONE)
     else
         emit!(e, OP_LOAD_CONST)
         emit_u16!(e, add_const!(e, x))
@@ -152,7 +156,7 @@ function compile_node!(e::Emitter, node::ExprNode)::Nothing
             pop_depth!(e)
             pop_depth!(e)
             return nothing
-        elseif op == OP_MAX2 || op == OP_MIN2 || op == OP_GET || op == OP_ROUND || op == OP_ISLESS || op == OP_DIV_INT
+        elseif op in (OP_MAX2, OP_MIN2, OP_GET, OP_ROUND, OP_ISLESS, OP_DIV_INT, OP_REM)
             n != 2 && error("function $(head) requires exactly 2 arguments, got $n")
             compile_node!(e, args[1])
             compile_node!(e, args[2])
@@ -187,7 +191,6 @@ end
 Compile a parsed expression tree into compact bytecode.
 All formulas compiled with the same `ctx` share variable indices.
 
-Throws an error if the expression contains string operations.
 """
 function compile_expr(node::Union{AbstractExpr,ExprNode}, ctx::VarContext)::CompiledExpr
     e = Emitter(ctx)
