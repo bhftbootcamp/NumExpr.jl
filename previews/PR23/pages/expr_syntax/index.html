@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Expression Syntax · NumExpr.jl</title><meta name="title" content="Expression Syntax · NumExpr.jl"/><meta property="og:title" content="Expression Syntax · NumExpr.jl"/><meta property="twitter:title" content="Expression Syntax · NumExpr.jl"/><meta name="description" content="Documentation for NumExpr.jl."/><meta property="og:description" content="Documentation for NumExpr.jl."/><meta property="twitter:description" content="Documentation for NumExpr.jl."/><meta property="og:url" content="https://bhftbootcamp.github.io/NumExpr.jl/pages/expr_syntax/"/><meta property="twitter:url" content="https://bhftbootcamp.github.io/NumExpr.jl/pages/expr_syntax/"/><link rel="canonical" href="https://bhftbootcamp.github.io/NumExpr.jl/pages/expr_syntax/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="NumExpr.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li class="is-active"><a class="tocitem" href>Expression Syntax</a><ul class="internal"><li><a class="tocitem" href="#numeric_vals"><span>Numeric values</span></a></li><li><a class="tocitem" href="#string_vals"><span>String values</span></a></li><li><a class="tocitem" href="#variable_vals"><span>Variables</span></a></li><li><a class="tocitem" href="#custom_func"><span>Custom Functions</span></a></li></ul></li><li><a class="tocitem" href="../api_reference/">API reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Expression Syntax</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Expression Syntax</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/bhftbootcamp/NumExpr.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/bhftbootcamp/NumExpr.jl/blob/master/docs/src/pages/expr_syntax.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="syntax"><a class="docs-heading-anchor" href="#syntax">Expression Syntax</a><a id="syntax-1"></a><a class="docs-heading-anchor-permalink" href="#syntax" title="Permalink"></a></h1><p>This section outlines the basic syntax rules that expressions must adhere to.</p><h2 id="numeric_vals"><a class="docs-heading-anchor" href="#numeric_vals">Numeric values</a><a id="numeric_vals-1"></a><a class="docs-heading-anchor-permalink" href="#numeric_vals" title="Permalink"></a></h2><p>Integer values, floating-point values, and exponential notation values can be used in expressions.</p><pre><code class="language-julia-repl hljs">julia&gt; expr = parse_expr(&quot;42&quot;)
+42.0
+
+julia&gt; typeof(expr)
+NumVal{Float64}
+
+julia&gt; eval_expr(expr)
+42.0</code></pre><p>During parsing, numeric values correspond to the <code>Number</code> type.</p><h3 id="Operations-on-Numbers"><a class="docs-heading-anchor" href="#Operations-on-Numbers">Operations on Numbers</a><a id="Operations-on-Numbers-1"></a><a class="docs-heading-anchor-permalink" href="#Operations-on-Numbers" title="Permalink"></a></h3><p>The following operations are defined for numeric values:</p><ul><li>Arithmetic:<ul><li><code>+</code>: addition</li><li><code>-</code>: subtraction</li><li><code>*</code>: multiplication</li><li><code>/</code>: division</li><li><code>^</code>: exponentiation</li></ul></li></ul><pre><code class="language-julia-repl hljs">julia&gt; expr = parse_expr(&quot;1 + 2 * 3&quot;)
+ExprNode(
+  +,
+  Union{AbstractExpr, ExprNode}[
+    1.0,
+    ExprNode(
+      *,
+      Union{AbstractExpr, ExprNode}[
+        2.0,
+        3.0
+      ],
+    ),
+  ],
+)
+
+julia&gt; typeof(expr)
+ExprNode
+
+julia&gt; eval_expr(expr)
+7.0</code></pre><ul><li>Logical:<ul><li><code>&gt;</code>: greater than</li><li><code>&lt;</code>: less than</li><li><code>&gt;=</code>: greater than or equal to</li><li><code>&lt;=</code>: less than or equal to</li><li><code>!=</code>: not equal to</li><li><code>==</code>: equal to</li></ul></li></ul><pre><code class="language-julia-repl hljs">julia&gt; expr = parse_expr(&quot;1 &lt; 3&quot;)
+ExprNode(
+  &lt;,
+  Union{AbstractExpr, ExprNode}[
+    1.0,
+    3.0
+  ],
+)
+
+julia&gt; typeof(expr)
+ExprNode
+
+julia&gt; eval_expr(expr)
+true</code></pre><ul><li>Mathematical:<ul><li><code>abs</code>: absolute value</li><li><code>sqrt</code>: square root</li><li><code>sin</code>: sine</li><li><code>cos</code>: cosine</li><li><code>atan</code>: arctangent</li><li><code>exp</code>: exponent</li><li><code>log</code>: logarithm</li></ul></li></ul><pre><code class="language-julia-repl hljs">julia&gt; expr = parse_expr(&quot;abs(-1) + cos(0)&quot;)
+ExprNode(+
+  Union{AbstractExpr, ExprNode}[
+    ExprNode(
+      abs,
+      Union{AbstractExpr, ExprNode}[
+        ExprNode(
+          -,
+          Union{AbstractExpr, ExprNode}[
+            1.0
+          ],
+        ),
+      ],
+    ), 
+    ExprNode(
+      cos,
+      Union{AbstractExpr, ExprNode}[
+        0.0
+      ],
+    ),
+  ],
+)
+
+julia&gt; typeof(expr)
+ExprNode
+
+julia&gt; eval_expr(expr)
+2.0</code></pre><h2 id="string_vals"><a class="docs-heading-anchor" href="#string_vals">String values</a><a id="string_vals-1"></a><a class="docs-heading-anchor-permalink" href="#string_vals" title="Permalink"></a></h2><p>Expressions can also contain string values by enclosing them with single quotes (<code>&#39;</code>) on both sides.</p><pre><code class="language-julia-repl hljs">julia&gt; expr = parse_expr(&quot; &#39;its my string&#39; &quot;)
+its my string
+
+julia&gt; typeof(expr)
+StrVal
+
+julia&gt; eval_expr(expr)
+&quot;its my string&quot;</code></pre><p>Inside such a string, no other single quote characters can be present. During parsing, string values correspond to the <code>String</code> type.</p><h3 id="Operations-on-Strings"><a class="docs-heading-anchor" href="#Operations-on-Strings">Operations on Strings</a><a id="Operations-on-Strings-1"></a><a class="docs-heading-anchor-permalink" href="#Operations-on-Strings" title="Permalink"></a></h3><p>The following operations are defined for string values:</p><ul><li><code>*</code>: concatenation</li><li><code>^</code>: repetition</li><li>Logical:<ul><li><code>&gt;</code>: greater than</li><li><code>&lt;</code>: less than</li><li><code>&gt;=</code>: greater than or equal to</li><li><code>&lt;=</code>: less than or equal to</li><li><code>!=</code>: not equal to</li><li><code>==</code>: equal to</li></ul></li></ul><pre><code class="language-julia-repl hljs">julia&gt; expr = parse_expr(&quot;&#39;Julia&#39; * &#39;Lang&#39; * &#39;❤️&#39;&quot;)
+ExprNode(
+  *,
+  Union{AbstractExpr, ExprNode}[
+    Julia,
+    Lang,
+    ❤️,
+  ],
+)
+
+julia&gt; eval_expr(expr)
+&quot;JuliaLang❤️&quot;</code></pre><h2 id="variable_vals"><a class="docs-heading-anchor" href="#variable_vals">Variables</a><a id="variable_vals-1"></a><a class="docs-heading-anchor-permalink" href="#variable_vals" title="Permalink"></a></h2><p>Finally, the most important type of values are variable values. Referring to them within an expression can consist of two parts:</p><ul><li>(required) the regular variable name according to the <a href="https://docs.julialang.org/en/v1/manual/variables/#man-allowed-variable-names">variable naming rules</a>.</li><li>(optional) tags related to this variable.</li></ul><p>Let&#39;s take a closer look at the syntax for the tag system:</p><ul><li>Tags are specified inside curly braces <code>{}</code> or square brackets <code>[]</code> immediately following the variable name.</li><li>Tags can be specified in any order and are listed with commas without spaces.</li><li>Tags consist of a key-value pairs in the form of <code>key=&#39;value&#39;</code>.</li><li>The name should contain only letters and numbers without spaces, and the first character of the name should be a letter.</li><li>The tag value must be a <a href="#string_vals">string value</a>.</li></ul><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>Tags can be used as an extended variable name.</p></div></div><h3 id="Variable-scopes"><a class="docs-heading-anchor" href="#Variable-scopes">Variable scopes</a><a id="Variable-scopes-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-scopes" title="Permalink"></a></h3><p>For convenience, variables can be classified into local and global ones. The user can define which variables belong to which of such formats.</p><p>For the following examples, we will declare two dictionaries that will be responsible for global and local variables:</p><pre><code class="language-julia hljs">const local_vars = Dict{String,Float64}(
+    &quot;var&quot;              =&gt; 1,
+    &quot;var{tag=&#39;value&#39;}&quot; =&gt; 2,
+)
+
+const global_vars = Dict{String,Float64}(
+    &quot;var&quot;              =&gt; 3,
+    &quot;var[tag=&#39;value&#39;]&quot; =&gt; 4,
+)</code></pre><p>As well as a function that will extract the values of variables in the process of calculating expressions</p><pre><code class="language-julia hljs">function NumExpr.eval_expr(var::NumExpr.Variable)
+    return get(isglobal_scope(var) ? global_vars : local_vars, var[], NaN)
+end</code></pre><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>Currently, this is done only to facilitate the separation of variables into two formats and is not related to scope. This division is intended for implementing additional functionality.</p></div></div><p>During parsing, local variables correspond to the type <code>Variable{LocalScope}</code>, and global ones to <code>Variable{GlobalScope}</code>.</p><h4 id="Local-variables"><a class="docs-heading-anchor" href="#Local-variables">Local variables</a><a id="Local-variables-1"></a><a class="docs-heading-anchor-permalink" href="#Local-variables" title="Permalink"></a></h4><p>Local variables specified when using <code>{}</code> brackets for tags or in the absence of a tag.</p><p>By default:</p><pre><code class="language-julia-repl hljs">julia&gt; expr = parse_expr(&quot;var&quot;)
+var
+
+julia&gt; typeof(expr)
+Variable{LocalScope}
+
+julia&gt; var = eval_expr(expr)
+1.0
+
+julia&gt; typeof(var)
+Float64</code></pre><p>By local tag:</p><pre><code class="language-julia-repl hljs">julia&gt; expr = parse_expr(&quot;var{tag=&#39;value&#39;}&quot;)
+var{tag=&#39;value&#39;}
+
+julia&gt; typeof(expr)
+Variable{LocalScope}
+
+julia&gt; var = eval_expr(expr)
+2.0</code></pre><p>Calling a local variable without tags:</p><pre><code class="language-julia-repl hljs">julia&gt; expr = parse_expr(&quot;{var}&quot;)
+var
+
+julia&gt; eval_expr(expr)
+1.0</code></pre><h4 id="Global-variables"><a class="docs-heading-anchor" href="#Global-variables">Global variables</a><a id="Global-variables-1"></a><a class="docs-heading-anchor-permalink" href="#Global-variables" title="Permalink"></a></h4><p>Global variables specified when using <code>[]</code> brackets for tags.</p><p>Calling a global variable without tags:</p><pre><code class="language-julia-repl hljs">julia&gt; expr = parse_expr(&quot;[var]&quot;)
+var
+
+julia&gt; typeof(expr)
+Variable{GlobalScope}
+
+julia&gt; eval_expr(expr)
+3.0</code></pre><p>By global tag:</p><pre><code class="language-julia-repl hljs">julia&gt; expr = parse_expr(&quot;var[tag=&#39;value&#39;]&quot;)
+var[tag=&#39;value&#39;]
+
+julia&gt; typeof(expr)
+Variable{GlobalScope}
+
+julia&gt; eval_expr(expr)
+4.0</code></pre><h3 id="Variable-values"><a class="docs-heading-anchor" href="#Variable-values">Variable values</a><a id="Variable-values-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-values" title="Permalink"></a></h3><p>To interpret the variables specified in the expression as concrete values during the calculation process, the following steps need to be taken:</p><ul><li>Determine the data source from which variables can be extracted using their full name (including tags, which should be sorted in alphabetical order). For example, a dictionary:</li></ul><pre><code class="language-julia hljs">colors = Dict{String, UInt32}(
+    &quot;color&quot;                 =&gt; 0xffffff,
+    &quot;color[name=&#39;red&#39;]&quot;     =&gt; 0xff0000,
+    &quot;color[name=&#39;green&#39;]&quot;   =&gt; 0x00ff00,
+    &quot;color[name=&#39;blue&#39;]&quot;    =&gt; 0x0000ff,
+    &quot;color[name=&#39;yellow&#39;]&quot;  =&gt; 0xffff00,
+    &quot;color[name=&#39;cyan&#39;]&quot;    =&gt; 0x00ffff,
+    &quot;color[name=&#39;magenta&#39;]&quot; =&gt; 0xff00ff,
+)</code></pre><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>The full name of a <code>Variable</code> type variable can be obtained by applying the unary operator <code>[]</code> to the object.</p></div></div><ul><li>Then, it is necessary to overload the function that will extract variable values from their source.</li></ul><p>For example, let&#39;s request the value for the variable name <code>var</code> from the <code>colors</code> dictionary:</p><pre><code class="language-julia hljs">NumExpr.eval_expr(var::NumExpr.Variable) = get(colors, var[], NaN)</code></pre><p>Now, during the evaluation of the expression, variables will be interpreted as numbers.</p><pre><code class="language-julia-repl hljs">julia&gt; expr = parse_expr(&quot;color&quot;);
+
+julia&gt; eval_expr(expr)
+0x00ffffff
+
+julia&gt; expr = parse_expr(&quot;color[name=&#39;red&#39;] + color[name=&#39;green&#39;] + color[name=&#39;blue&#39;]&quot;);
+
+julia&gt; eval_expr(expr)
+0x0000000000ffffff</code></pre><h2 id="custom_func"><a class="docs-heading-anchor" href="#custom_func">Custom Functions</a><a id="custom_func-1"></a><a class="docs-heading-anchor-permalink" href="#custom_func" title="Permalink"></a></h2><p>In addition to predefined functions, users can define their own. To define a new operation on the elements mentioned earlier, you need to define a new method for the <code>NumExpr.call</code> function.</p><ul><li>The first argument of such a method should be of type <code>::NumExpr.Func{:S}</code>, where <code>S</code> is the name of the new function.</li><li>Subsequent arguments should correspond to the required arguments of the defined function.</li></ul><p>For example, for a function <code>max(x::Number, y::Number)</code>, you need to define the following method:</p><pre><code class="language-julia hljs">function NumExpr.call(::NumExpr.Func{:max}, x::Number, y::Number)
+    return max(x, y)
+end</code></pre><p>Now, expressions containing such a function can be correctly processed.</p><pre><code class="language-julia-repl hljs">julia&gt; expr = parse_expr(&quot;max(5, 10) + max(20, 3)&quot;);
+
+julia&gt; eval_expr(expr)
+30.0</code></pre><p>For functions with an unknown number of arguments the method can look like this:</p><pre><code class="language-julia hljs">function NumExpr.call(::NumExpr.Func{:sum}, x::Number...)
+    return sum(x)
+end</code></pre><p>Now we can call the <code>sum</code> function with any number of arguments.</p><pre><code class="language-julia-repl hljs">julia&gt; expr = parse_expr(&quot;sum(6, 4) + sum(5, 15, 10)&quot;);
+
+julia&gt; eval_expr(expr)
+40.0</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../api_reference/">API reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Monday 30 December 2024 14:33">Monday 30 December 2024</span>. Using Julia version 1.11.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
