@@ -7,64 +7,71 @@ const OP_LOAD_VAR   = 0x02
 const OP_LOAD_TRUE  = 0x03
 const OP_LOAD_FALSE = 0x04
 const OP_LOAD_NAN   = 0x05
+const OP_LOAD_ZERO  = 0x06
+const OP_LOAD_ONE   = 0x07
 
 #__ arithmetic
 
-const OP_ADD = 0x10
-const OP_SUB = 0x11
-const OP_MUL = 0x12
-const OP_DIV = 0x13
-const OP_POW = 0x14
-const OP_MOD = 0x15
-const OP_NEG = 0x16
+const OP_ADD = 0x08
+const OP_SUB = 0x09
+const OP_MUL = 0x0A
+const OP_DIV = 0x0B
+const OP_POW = 0x0C
+const OP_MOD = 0x0D
+const OP_NEG = 0x0E
+const OP_REM = 0x0F
 
 #__ comparison
 
-const OP_GT = 0x20
-const OP_LT = 0x21
-const OP_GE = 0x22
-const OP_LE = 0x23
-const OP_EQ = 0x24
-const OP_NE = 0x25
+const OP_GT = 0x10
+const OP_LT = 0x11
+const OP_GE = 0x12
+const OP_LE = 0x13
+const OP_EQ = 0x14
+const OP_NE = 0x15
 
 #__ logic
 
-const OP_AND = 0x30
-const OP_OR  = 0x31
+const OP_AND = 0x16
+const OP_OR  = 0x17
 
 #__ function
 
-const OP_SQRT = 0x40
-const OP_ABS  = 0x41
-const OP_SIN  = 0x42
-const OP_COS  = 0x43
-const OP_ATAN = 0x44
-const OP_EXP  = 0x45
-const OP_LOG  = 0x46
+const OP_SQRT = 0x18
+const OP_ABS  = 0x19
+const OP_SIN  = 0x1A
+const OP_COS  = 0x1B
+const OP_ATAN = 0x1C
+const OP_EXP  = 0x1D
+const OP_LOG  = 0x1E
 
 #__ unary predicates
 
-const OP_ISNAN  = 0x47
-const OP_NOT    = 0x48
-const OP_ISZERO = 0x49
-const OP_ISONE  = 0x4A
-const OP_FLOOR  = 0x4B
-const OP_CEIL   = 0x4C
-const OP_TG     = 0x4D
-const OP_CTG    = 0x4E
+const OP_ISNAN  = 0x1F
+const OP_NOT    = 0x20
+const OP_ISZERO = 0x21
+const OP_ISONE  = 0x22
+const OP_FLOOR  = 0x23
+const OP_CEIL   = 0x24
+const OP_TG     = 0x25
+const OP_CTG    = 0x26
 
 #__ binary / ternary functions
 
-const OP_MAX2   = 0x50
-const OP_MIN2   = 0x51
-const OP_IFELSE = 0x52
-const OP_GET    = 0x53
-const OP_ROUND  = 0x54
-const OP_ISLESS = 0x55
-const OP_DIV_INT = 0x56
-const OP_MEAN    = 0x57
+const OP_MAX2    = 0x27
+const OP_MIN2    = 0x28
+const OP_IFELSE  = 0x29
+const OP_GET     = 0x2A
+const OP_ROUND   = 0x2B
+const OP_ISLESS  = 0x2C
+const OP_DIV_INT = 0x2D
+const OP_MEAN    = 0x2E
 
 #__ opcode dispatch
+
+# Fallback: any function operator without an explicit opcode is unsupported.
+opcode(f::AbstractFuncOperator) =
+    error("compiled mode does not support function '$(operator(f))'")
 
 opcode(::Arithmetic{:+})::UInt8  = OP_ADD
 opcode(::Arithmetic{:-})::UInt8  = OP_SUB
@@ -108,3 +115,4 @@ opcode(::Func{:round})::UInt8  = OP_ROUND
 opcode(::Func{:isless})::UInt8 = OP_ISLESS
 opcode(::Func{:div})::UInt8    = OP_DIV_INT
 opcode(::Func{:mean})::UInt8  = OP_MEAN
+opcode(::Func{:rem})::UInt8   = OP_REM

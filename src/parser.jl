@@ -106,7 +106,10 @@ struct NumVal{T<:Real} <: AbstractValue
 end
 
 var_name(x::Variable)::String = x.name
-var_tags(x::Variable)::Dict{String,String} = x.tags === nothing ? Dict{String,String}() : x.tags
+
+const _EMPTY_TAGS = Dict{String,String}()
+
+var_tags(x::Variable)::Dict{String,String} = x.tags === nothing ? _EMPTY_TAGS : x.tags
 var_has_tags(x::Variable)::Bool = x.tags !== nothing
 Base.getindex(x::AbstractValue) = getfield(x, :val)
 Base.show(io::IO, n::AbstractValue) = print(io, n[])
