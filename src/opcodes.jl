@@ -67,6 +67,16 @@ const OP_ISLESS  = 0x2C
 const OP_DIV_INT = 0x2D
 const OP_MEAN    = 0x2E
 
+#__ calendar parts of a ns-unix timestamp
+
+const OP_MILLISECOND = 0x2F
+const OP_SECOND = 0x30
+const OP_MINUTE = 0x31
+const OP_HOUR = 0x32
+const OP_DAYOFMONTH = 0x33
+const OP_MONTH = 0x34
+const OP_YEAR = 0x35
+
 #__ opcode dispatch
 
 # Fallback: any function operator without an explicit opcode is unsupported.
@@ -116,3 +126,11 @@ opcode(::Func{:isless})::UInt8 = OP_ISLESS
 opcode(::Func{:div})::UInt8    = OP_DIV_INT
 opcode(::Func{:mean})::UInt8  = OP_MEAN
 opcode(::Func{:rem})::UInt8   = OP_REM
+
+opcode(::Func{:millisecond})::UInt8 = OP_MILLISECOND
+opcode(::Func{:second})::UInt8      = OP_SECOND
+opcode(::Func{:minute})::UInt8      = OP_MINUTE
+opcode(::Func{:hour})::UInt8        = OP_HOUR
+opcode(::Func{:dayofmonth})::UInt8  = OP_DAYOFMONTH
+opcode(::Func{:month})::UInt8       = OP_MONTH
+opcode(::Func{:year})::UInt8        = OP_YEAR

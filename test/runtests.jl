@@ -1,4 +1,5 @@
 using Test
+using Dates
 using NumExpr
 
 vectorial(x::NumExpr.NumVal) = [string(x)]
@@ -1649,6 +1650,60 @@ end
             # In larger expression
             c6 = compile_expr("mean(a, b, c) + 1", ctx)
             @test eval_compiled(c6, [2.0, 4.0, 6.0]) == 5.0
+        end
+
+        @testset "calendar opcodes" begin
+            ctx = VarContext()
+            cms  = compile_expr("millisecond(t)", ctx)
+            cs   = compile_expr("second(t)", ctx)
+            cmi  = compile_expr("minute(t)", ctx)
+            ch   = compile_expr("hour(t)", ctx)
+            cd   = compile_expr("dayofmonth(t)", ctx)
+            cmo  = compile_expr("month(t)", ctx)
+            cy   = compile_expr("year(t)", ctx)
+
+            dts = [
+                DateTime(2026, 7, 11, 15, 42, 7, 123),
+                DateTime(2024, 2, 29, 23, 59, 59, 999),  # leap day
+                DateTime(2000, 3, 1, 0, 0, 0, 1),
+                DateTime(1970, 1, 1, 0, 0, 0, 0),
+                DateTime(1969, 12, 31, 23, 59, 59, 500), # pre-epoch
+                DateTime(1900, 2, 28, 12, 30, 45, 250),  # non-leap century
+            ]
+            for dt in dts
+                # exact ns timestamp with a sub-ms offset: exact ms boundaries
+                # fall within Float64 register precision (~hundreds of ns)
+                ns = Dates.value(dt - DateTime(1970, 1, 1)) * 1_000_000 + 456_789
+                v = [Float64(ns)]
+                @test eval_compiled(cy,  v) == Dates.year(dt)
+                @test eval_compiled(cmo, v) == Dates.month(dt)
+                @test eval_compiled(cd,  v) == Dates.day(dt)
+                @test eval_compiled(ch,  v) == Dates.hour(dt)
+                @test eval_compiled(cmi, v) == Dates.minute(dt)
+                @test eval_compiled(cs,  v) == Dates.second(dt)
+                @test eval_compiled(cms, v) == Dates.millisecond(dt)
+            end
+
+            # NaN propagates
+            for c in (cms, cs, cmi, ch, cd, cmo, cy)
+                @test isnan(eval_compiled(c, [NaN]))
+            end
+
+            # in a larger expression
+            cexpr = compile_expr("year(t) * 100 + month(t)", ctx)
+            ns = Dates.value(DateTime(2026, 7, 11) - DateTime(1970, 1, 1)) * 1_000_000
+            @test eval_compiled(cexpr, [Float64(ns)]) == 202607.0
+
+            # zero allocations
+            stack = Vector{Float64}(undef, cy.max_stack)
+            vals = [1.0e18]
+            function measure_calendar_allocs(c, values, stack)
+                for _ in 1:5
+                    eval_compiled(c, values, stack)
+                end
+                return @allocated eval_compiled(c, values, stack)
+            end
+            @test measure_calendar_allocs(cy, vals, stack) == 0
         end
 
         @testset "Callable resolver (functor)" begin

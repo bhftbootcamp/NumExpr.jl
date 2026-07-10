@@ -24,6 +24,22 @@ end
     unsafe_load(vars_ptr, idx)
 @inline _read_var(vars, ::Nothing, idx::Int) =
     @inbounds vars[idx]
+#__ calendar helpers (ns-unix timestamp as Float64)
+
+# civil_from_days (H. Hinnant): (year, month, day) of the civil date
+@inline function _civil(v::Float64)::NTuple{3,Float64}
+    days = fld(v, 86_400_000_000_000.0)
+    z = days + 719_468.0
+    era = fld(z, 146_097.0)
+    doe = z - era * 146_097.0
+    yoe = fld(doe - fld(doe, 1460.0) + fld(doe, 36_524.0) - fld(doe, 146_096.0), 365.0)
+    y = yoe + era * 400.0
+    doy = doe - (365.0 * yoe + fld(yoe, 4.0) - fld(yoe, 100.0))
+    mp = fld(5.0 * doy + 2.0, 153.0)
+    d = doy - fld(153.0 * mp + 2.0, 5.0) + 1.0
+    m = mp < 10.0 ? mp + 3.0 : mp - 9.0
+    return (m <= 2.0 ? y + 1.0 : y, m, d)
+end
 
 #__ core VM loop
 
@@ -271,6 +287,34 @@ function vm_eval(
                 unsafe_store!(stack_ptr, s / count, base)
                 sp = base
                 pc += 2
+            elseif op == OP_MILLISECOND
+                x = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, isnan(x) ? NaN : mod(fld(x, 1.0e6), 1000.0), sp)
+                pc += 1
+            elseif op == OP_SECOND
+                x = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, isnan(x) ? NaN : mod(fld(x, 1.0e9), 60.0), sp)
+                pc += 1
+            elseif op == OP_MINUTE
+                x = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, isnan(x) ? NaN : mod(fld(x, 6.0e10), 60.0), sp)
+                pc += 1
+            elseif op == OP_HOUR
+                x = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, isnan(x) ? NaN : mod(fld(x, 3.6e12), 24.0), sp)
+                pc += 1
+            elseif op == OP_DAYOFMONTH
+                x = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, isnan(x) ? NaN : _civil(x)[3], sp)
+                pc += 1
+            elseif op == OP_MONTH
+                x = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, isnan(x) ? NaN : _civil(x)[2], sp)
+                pc += 1
+            elseif op == OP_YEAR
+                x = unsafe_load(stack_ptr, sp)
+                unsafe_store!(stack_ptr, isnan(x) ? NaN : _civil(x)[1], sp)
+                pc += 1
             else
                 error("unknown opcode: 0x$(string(op, base=16, pad=2))")
             end
