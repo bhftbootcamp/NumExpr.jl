@@ -55,7 +55,7 @@ For more information see section [Variables](@ref variable_vals).
 ## Fields
 - `val::String`: Full name of the variable including its tags.
 - `name::String`: The variable name without tags
-- `tags::Dict{String,String}`: Tags of the variable.
+- `tags::Union{Nothing,Dict{String,String}}`: Tags of the variable (`nothing` when tag-less).
 
 ## Examples
 
@@ -87,7 +87,7 @@ julia> var[]
 struct Variable{S<:AbstractScope} <: AbstractValue
     val::String
     name::String
-    tags::Dict{String,String}
+    tags::Union{Nothing,Dict{String,String}}
 end
 
 (isglobal_scope(::Variable{S})::Bool) where {S<:AbstractScope} = S <: GlobalScope
@@ -106,7 +106,11 @@ struct NumVal{T<:Real} <: AbstractValue
 end
 
 var_name(x::Variable)::String = x.name
-var_tags(x::Variable)::Dict{String,String} = x.tags
+
+const _EMPTY_TAGS = Dict{String,String}()
+
+var_tags(x::Variable)::Dict{String,String} = x.tags === nothing ? _EMPTY_TAGS : x.tags
+var_has_tags(x::Variable)::Bool = x.tags !== nothing
 Base.getindex(x::AbstractValue) = getfield(x, :val)
 Base.show(io::IO, n::AbstractValue) = print(io, n[])
 
@@ -114,7 +118,7 @@ Base.show(io::IO, n::AbstractValue) = print(io, n[])
 
 function parse_var_format1(::Type{S}, chars::Vector{Char})::Variable{S} where {S<:AbstractScope}
     str_val = String(chars)
-    return Variable{S}(str_val, str_val, Dict{String,String}())
+    return Variable{S}(str_val, str_val, nothing)
 end
 
 function parse_var_format2(::Type{S}, chars::Vector{Char})::Variable{S} where {S<:AbstractScope}
